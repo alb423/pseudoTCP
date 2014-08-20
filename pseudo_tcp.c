@@ -404,13 +404,13 @@ void PTCP_NotifyClock(tPseudoTcp *pPTCP, U32 now) {
 
 
 bool PTCP_NotifyPacket(tPseudoTcp *pPTCP, const U8* buffer, size_t len) {
-   LOG(LS_INFO, "PTCP_NotifyPacket In");
+   //LOG(LS_INFO, "PTCP_NotifyPacket In");
    ASSERT(pPTCP!=NULL);
    if (len > MAX_PACKET) {
       LOG(LS_INFO, "PTCP_Packet too large");
       return false;
    }
-   LOG(LS_INFO, "PTCP_NotifyPacket Out");
+   //LOG(LS_INFO, "PTCP_NotifyPacket Out");
    return PTCP_Parse(pPTCP, (const U8 *)buffer, (U32)len);
 }
 
@@ -592,7 +592,7 @@ U32 PTCP_Queue(tPseudoTcp *pPTCP, const U8* data, U32 len, bool bCtrl) {
 
 
 tWriteResult PTCP_Packet(tPseudoTcp *pPTCP, U32 seq, U8 flags, U32 offset, U32 len) {
-   LOG(LS_INFO, "PTCP_Packet");
+   //LOG(LS_INFO, "PTCP_Packet");
    ASSERT(pPTCP!=NULL); 
    ASSERT(HEADER_SIZE + len <= MAX_PACKET);
    U32 now = PTCP_Now();
@@ -675,6 +675,7 @@ bool PTCP_Parse(tPseudoTcp *pPTCP, const U8* buffer, U32 size) {
    sprintf(pTmp, "--> <CONV=%d><FLG=%d><SEQ=%d:%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>", \
       seg.conv, (unsigned)seg.flags, seg.seq, seg.seq + seg.len, seg.ack, seg.wnd,\
       (seg.tsval % 10000), (seg.tsecr % 10000), seg.len);
+    LOG(LS_INFO, pTmp);
 #endif // _DEBUGMSG
 
    return PTCP_Process(pPTCP, &seg);
@@ -1084,7 +1085,7 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now) {
    U32 nTransmit = MIN(seg->len, pPTCP->m_mss);
 
    while (true) {
-      LOG(LS_INFO, "while (true)");
+      //LOG(LS_INFO, "while (true)");
       U32 seq = seg->seq;
       U8 flags = (seg->bCtrl ? FLAG_CTL : 0);
       tWriteResult wres = PTCP_Packet( pPTCP, 
@@ -1200,7 +1201,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
          FIFO_GetWriteRemaining(pPTCP->m_sbuf, &available_space);
 
          bFirst = false;
-
+          
          char pTmpBuf[1024]={0};
          sprintf(pTmpBuf, "\n[cwnd: %d\n nWindow: %d\n nInFlight: %d\n nAvailable: %d\n nQueued: %zu\n nEmpty: %zu\n ssthresh: %d]\n",\
          pPTCP->m_cwnd, nWindow, nInFlight, nAvailable, snd_buffered, available_space, pPTCP->m_ssthresh);     

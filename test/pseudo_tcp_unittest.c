@@ -310,7 +310,7 @@ void ReadData() {
       rcvd = PTCP_Recv(_gpRemote, block, sizeof(block));
       if (rcvd != -1) {
          char pTmp[1024]={0};
-         MS_Read(_gpPTCPTest->recv_stream_ , block, rcvd, NULL, NULL);
+         MS_Write(_gpPTCPTest->recv_stream_ , block, rcvd, NULL, NULL);
          MS_GetPosition(_gpPTCPTest->recv_stream_ , &position);
          
          sprintf(pTmp,"Received: %zu\n",position);
@@ -414,8 +414,8 @@ void OnTcpClosed_01(tPseudoTcp* pPTCP, U32 error) {
 tWriteResult TcpWritePacket_01(tPseudoTcp* pPTCP, const char* buffer, size_t len) {
    
    char pTmp[1024]={0};
-   if (pPTCP == _gpRemote) { sprintf(pTmp, "_gpRemote TcpWritePacket_01 delay_=%d", _gpPTCPTest->delay_);}
-   else { sprintf(pTmp, "_gpLocal TcpWritePacket_01 delay_=%d", _gpPTCPTest->delay_);}
+   if (pPTCP == _gpRemote) { sprintf(pTmp, "_gpRemote MSG_RPACKET delay_=%d", _gpPTCPTest->delay_);}
+   else { sprintf(pTmp, "_gpLocal MSG_LPACKET delay_=%d", _gpPTCPTest->delay_);}
    LOG(LS_VERBOSE, pTmp);
 
    // Randomly drop the desired percentage of packets.
@@ -428,15 +428,6 @@ tWriteResult TcpWritePacket_01(tPseudoTcp* pPTCP, const char* buffer, size_t len
       LOG(LS_VERBOSE, pTmp);
    } else {
       int id = (pPTCP == _gpLocal) ? MSG_RPACKET : MSG_LPACKET;
-      
-      if(id==MSG_RPACKET)
-      {
-         LOG(LS_INFO, "TcpWritePacket_01  MSG_RPACKET");
-      }
-      else
-      {
-         LOG(LS_INFO, "TcpWritePacket_01  MSG_LPACKET");
-      }
          
       tMessageData *pData = malloc(sizeof(tMessageData));      
       pData->pVal = malloc(len+1);
@@ -545,10 +536,11 @@ void PseudoTcpTest_01_02(void)
    
    SetLocalMtu(1500);
    SetRemoteMtu(1500);
-   TestTransfer_01(1024);
+   //TestTransfer_01(1024);
+   //TestTransfer_01(1400);
+    TestTransfer_01(1500);
    //TestTransfer_01(1000000);
-   //TestTransfer_01(2048);
-   
+    
    PseudoTcpTestBase_Destroy(pTest);
 }
 

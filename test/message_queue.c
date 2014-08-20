@@ -426,7 +426,7 @@ void MQueue_Destroy(tMessageQueue *vpIn) {
 
 void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed) {
    //CritScope cs(&crit_);
-   LOG(LS_INFO, "pthread_mutex_lock _mutex");
+   //LOG(LS_INFO, "pthread_mutex_lock _mutex");
    pthread_mutex_lock(&_mutex);
 
    // Remove messages with phandler
@@ -536,7 +536,7 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed) {
    
    //dmsgq_.container().erase(new_end, dmsgq_.container().end());
    //dmsgq_.reheap();
-   LOG(LS_INFO, "pthread_mutex_unlock _mutex"); 
+   //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
    pthread_mutex_unlock(&_mutex);   
   
 }
@@ -608,7 +608,7 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
    // Signal for the multiplexer to return.
 
    //CritScope cs(&crit_);
-   LOG(LS_INFO, "pthread_mutex_lock _mutex");
+   //LOG(LS_INFO, "pthread_mutex_lock _mutex");
    pthread_mutex_lock(&_mutex);
    tMessage *pMsg = malloc(sizeof(tMessage));
    if(pMsg) {
@@ -625,7 +625,7 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
 
          //dmsgq_.push(dmsg);   
          LOG(LS_INFO, "PQueue_Push");
-         printf("&pIn->dmsgq=0x%x pDMsg=0x%x pDMsg->PQNode=0x%x\n", (U32)&pIn->dmsgq, (U32)pDMsg, (U32)&pDMsg->PQNode);
+         //printf("&pIn->dmsgq=0x%x pDMsg=0x%x pDMsg->PQNode=0x%x\n", (U32)&pIn->dmsgq, (U32)pDMsg, (U32)&pDMsg->PQNode);
          PQueue_Push(&pIn->dmsgq, &pDMsg->PQNode);
       }
       else
@@ -640,7 +640,7 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
    //VERIFY(0 != ++dmsgq_next_num_);
    //ss_->WakeUp();
    Event_Set();
-   LOG(LS_INFO, "pthread_mutex_unlock _mutex"); 
+   //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
    pthread_mutex_unlock(&_mutex); 
 }
 
