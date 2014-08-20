@@ -536,9 +536,9 @@ void PseudoTcpTest_01_02(void)
    
    SetLocalMtu(1500);
    SetRemoteMtu(1500);
-   //TestTransfer_01(1024);
+   TestTransfer_01(1024);
    //TestTransfer_01(1400);
-    TestTransfer_01(1500);
+   //TestTransfer_01(1500);
    //TestTransfer_01(1000000);
     
    PseudoTcpTestBase_Destroy(pTest);

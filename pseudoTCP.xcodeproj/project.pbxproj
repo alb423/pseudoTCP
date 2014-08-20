@@ -1,0 +1,343 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9ABE1FA919A49B350096298B /* libcunit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9ABE1FA819A49B350096298B /* libcunit.a */; };
+		B2281BF119A4F2370070EDF9 /* fifo_buffer_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BE419A4F2370070EDF9 /* fifo_buffer_unittest.c */; };
+		B2281BF219A4F2370070EDF9 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BE619A4F2370070EDF9 /* main.c */; };
+		B2281BF319A4F2370070EDF9 /* memory_stream_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BE719A4F2370070EDF9 /* memory_stream_unittest.c */; };
+		B2281BF419A4F2370070EDF9 /* memory_stream.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BE919A4F2370070EDF9 /* memory_stream.c */; };
+		B2281BF519A4F2370070EDF9 /* message_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BEB19A4F2370070EDF9 /* message_queue.c */; };
+		B2281BF619A4F2370070EDF9 /* pseudo_tcp_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BED19A4F2370070EDF9 /* pseudo_tcp_unittest.c */; };
+		B2281BF719A4F2370070EDF9 /* segment_list_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BEF19A4F2370070EDF9 /* segment_list_unittest.c */; };
+		B2281C0619A4F2440070EDF9 /* fifo_buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BF919A4F2440070EDF9 /* fifo_buffer.c */; };
+		B2281C0819A4F2440070EDF9 /* mi_util.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281BFD19A4F2440070EDF9 /* mi_util.c */; };
+		B2281C0919A4F2440070EDF9 /* pseudo_tcp_porting.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281C0019A4F2440070EDF9 /* pseudo_tcp_porting.c */; };
+		B2281C0A19A4F2440070EDF9 /* pseudo_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281C0219A4F2440070EDF9 /* pseudo_tcp.c */; };
+		B2281C0B19A4F2440070EDF9 /* segment_list.c in Sources */ = {isa = PBXBuildFile; fileRef = B2281C0419A4F2440070EDF9 /* segment_list.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9ABE1F4819A499930096298B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		9ABE1F4A19A499930096298B /* pseudoTCP */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pseudoTCP; sourceTree = BUILT_PRODUCTS_DIR; };
+		9ABE1FA819A49B350096298B /* libcunit.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcunit.a; path = ../../../../../../opt/local/lib/libcunit.a; sourceTree = "<group>"; };
+		B2281BE419A4F2370070EDF9 /* fifo_buffer_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fifo_buffer_unittest.c; path = test/fifo_buffer_unittest.c; sourceTree = SOURCE_ROOT; };
+		B2281BE519A4F2370070EDF9 /* fifo_buffer_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fifo_buffer_unittest.h; path = test/fifo_buffer_unittest.h; sourceTree = SOURCE_ROOT; };
+		B2281BE619A4F2370070EDF9 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = test/main.c; sourceTree = SOURCE_ROOT; };
+		B2281BE719A4F2370070EDF9 /* memory_stream_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory_stream_unittest.c; path = test/memory_stream_unittest.c; sourceTree = SOURCE_ROOT; };
+		B2281BE819A4F2370070EDF9 /* memory_stream_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory_stream_unittest.h; path = test/memory_stream_unittest.h; sourceTree = SOURCE_ROOT; };
+		B2281BE919A4F2370070EDF9 /* memory_stream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory_stream.c; path = test/memory_stream.c; sourceTree = SOURCE_ROOT; };
+		B2281BEA19A4F2370070EDF9 /* memory_stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory_stream.h; path = test/memory_stream.h; sourceTree = SOURCE_ROOT; };
+		B2281BEB19A4F2370070EDF9 /* message_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = message_queue.c; path = test/message_queue.c; sourceTree = SOURCE_ROOT; };
+		B2281BEC19A4F2370070EDF9 /* message_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = message_queue.h; path = test/message_queue.h; sourceTree = SOURCE_ROOT; };
+		B2281BED19A4F2370070EDF9 /* pseudo_tcp_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pseudo_tcp_unittest.c; path = test/pseudo_tcp_unittest.c; sourceTree = SOURCE_ROOT; };
+		B2281BEE19A4F2370070EDF9 /* pseudo_tcp_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp_unittest.h; path = test/pseudo_tcp_unittest.h; sourceTree = SOURCE_ROOT; };
+		B2281BEF19A4F2370070EDF9 /* segment_list_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = segment_list_unittest.c; path = test/segment_list_unittest.c; sourceTree = SOURCE_ROOT; };
+		B2281BF019A4F2370070EDF9 /* segment_list_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = segment_list_unittest.h; path = test/segment_list_unittest.h; sourceTree = SOURCE_ROOT; };
+		B2281BF819A4F2440070EDF9 /* byteorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = byteorder.h; sourceTree = SOURCE_ROOT; };
+		B2281BF919A4F2440070EDF9 /* fifo_buffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fifo_buffer.c; sourceTree = SOURCE_ROOT; };
+		B2281BFA19A4F2440070EDF9 /* fifo_buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fifo_buffer.h; sourceTree = SOURCE_ROOT; };
+		B2281BFC19A4F2440070EDF9 /* mi_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mi_types.h; sourceTree = SOURCE_ROOT; };
+		B2281BFD19A4F2440070EDF9 /* mi_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mi_util.c; sourceTree = SOURCE_ROOT; };
+		B2281BFE19A4F2440070EDF9 /* mi_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mi_util.h; sourceTree = SOURCE_ROOT; };
+		B2281BFF19A4F2440070EDF9 /* pseudo_tcp_int.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pseudo_tcp_int.h; sourceTree = SOURCE_ROOT; };
+		B2281C0019A4F2440070EDF9 /* pseudo_tcp_porting.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pseudo_tcp_porting.c; sourceTree = SOURCE_ROOT; };
+		B2281C0119A4F2440070EDF9 /* pseudo_tcp_porting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pseudo_tcp_porting.h; sourceTree = SOURCE_ROOT; };
+		B2281C0219A4F2440070EDF9 /* pseudo_tcp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pseudo_tcp.c; sourceTree = SOURCE_ROOT; };
+		B2281C0319A4F2440070EDF9 /* pseudo_tcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pseudo_tcp.h; sourceTree = SOURCE_ROOT; };
+		B2281C0419A4F2440070EDF9 /* segment_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = segment_list.c; sourceTree = SOURCE_ROOT; };
+		B2281C0519A4F2440070EDF9 /* segment_list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = segment_list.h; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9ABE1F4719A499930096298B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9ABE1FA919A49B350096298B /* libcunit.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9ABE1F4119A499930096298B = {
+			isa = PBXGroup;
+			children = (
+				9ABE1FA819A49B350096298B /* libcunit.a */,
+				9ABE1F4C19A499930096298B /* pseudoTCP */,
+				9ABE1F4B19A499930096298B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9ABE1F4B19A499930096298B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9ABE1F4A19A499930096298B /* pseudoTCP */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9ABE1F4C19A499930096298B /* pseudoTCP */ = {
+			isa = PBXGroup;
+			children = (
+				B2281BA619A4F0530070EDF9 /* src */,
+				9ABE1F5719A499BC0096298B /* include */,
+				9ABE1F5619A499B60096298B /* test */,
+			);
+			path = pseudoTCP;
+			sourceTree = "<group>";
+		};
+		9ABE1F5619A499B60096298B /* test */ = {
+			isa = PBXGroup;
+			children = (
+				B2281BE419A4F2370070EDF9 /* fifo_buffer_unittest.c */,
+				B2281BE519A4F2370070EDF9 /* fifo_buffer_unittest.h */,
+				B2281BE619A4F2370070EDF9 /* main.c */,
+				B2281BE719A4F2370070EDF9 /* memory_stream_unittest.c */,
+				B2281BE819A4F2370070EDF9 /* memory_stream_unittest.h */,
+				B2281BE919A4F2370070EDF9 /* memory_stream.c */,
+				B2281BEA19A4F2370070EDF9 /* memory_stream.h */,
+				B2281BEB19A4F2370070EDF9 /* message_queue.c */,
+				B2281BEC19A4F2370070EDF9 /* message_queue.h */,
+				B2281BED19A4F2370070EDF9 /* pseudo_tcp_unittest.c */,
+				B2281BEE19A4F2370070EDF9 /* pseudo_tcp_unittest.h */,
+				B2281BEF19A4F2370070EDF9 /* segment_list_unittest.c */,
+				B2281BF019A4F2370070EDF9 /* segment_list_unittest.h */,
+			);
+			name = test;
+			sourceTree = "<group>";
+		};
+		9ABE1F5719A499BC0096298B /* include */ = {
+			isa = PBXGroup;
+			children = (
+				B2281BF819A4F2440070EDF9 /* byteorder.h */,
+				B2281BFA19A4F2440070EDF9 /* fifo_buffer.h */,
+				B2281BFC19A4F2440070EDF9 /* mi_types.h */,
+				B2281BFE19A4F2440070EDF9 /* mi_util.h */,
+				B2281BFF19A4F2440070EDF9 /* pseudo_tcp_int.h */,
+				B2281C0119A4F2440070EDF9 /* pseudo_tcp_porting.h */,
+				B2281C0319A4F2440070EDF9 /* pseudo_tcp.h */,
+				B2281C0519A4F2440070EDF9 /* segment_list.h */,
+			);
+			name = include;
+			sourceTree = "<group>";
+		};
+		B2281BA619A4F0530070EDF9 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				B2281BF919A4F2440070EDF9 /* fifo_buffer.c */,
+				B2281BFD19A4F2440070EDF9 /* mi_util.c */,
+				B2281C0019A4F2440070EDF9 /* pseudo_tcp_porting.c */,
+				B2281C0219A4F2440070EDF9 /* pseudo_tcp.c */,
+				B2281C0419A4F2440070EDF9 /* segment_list.c */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9ABE1F4919A499930096298B /* pseudoTCP */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9ABE1F5319A499930096298B /* Build configuration list for PBXNativeTarget "pseudoTCP" */;
+			buildPhases = (
+				9ABE1F4619A499930096298B /* Sources */,
+				9ABE1F4719A499930096298B /* Frameworks */,
+				9ABE1F4819A499930096298B /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = pseudoTCP;
+			productName = pseudoTCP;
+			productReference = 9ABE1F4A19A499930096298B /* pseudoTCP */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9ABE1F4219A499930096298B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0510;
+				ORGANIZATIONNAME = "Liao KuoHsun";
+			};
+			buildConfigurationList = 9ABE1F4519A499930096298B /* Build configuration list for PBXProject "pseudoTCP" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 9ABE1F4119A499930096298B;
+			productRefGroup = 9ABE1F4B19A499930096298B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9ABE1F4919A499930096298B /* pseudoTCP */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9ABE1F4619A499930096298B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B2281BF419A4F2370070EDF9 /* memory_stream.c in Sources */,
+				B2281BF719A4F2370070EDF9 /* segment_list_unittest.c in Sources */,
+				B2281C0819A4F2440070EDF9 /* mi_util.c in Sources */,
+				B2281C0B19A4F2440070EDF9 /* segment_list.c in Sources */,
+				B2281C0919A4F2440070EDF9 /* pseudo_tcp_porting.c in Sources */,
+				B2281BF619A4F2370070EDF9 /* pseudo_tcp_unittest.c in Sources */,
+				B2281C0619A4F2440070EDF9 /* fifo_buffer.c in Sources */,
+				B2281BF219A4F2370070EDF9 /* main.c in Sources */,
+				B2281BF519A4F2370070EDF9 /* message_queue.c in Sources */,
+				B2281BF119A4F2370070EDF9 /* fifo_buffer_unittest.c in Sources */,
+				B2281BF319A4F2370070EDF9 /* memory_stream_unittest.c in Sources */,
+				B2281C0A19A4F2440070EDF9 /* pseudo_tcp.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		9ABE1F5119A499930096298B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		9ABE1F5219A499930096298B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		9ABE1F5419A499930096298B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/opt/local/include/,
+				);
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		9ABE1F5519A499930096298B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/opt/local/include/,
+				);
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9ABE1F4519A499930096298B /* Build configuration list for PBXProject "pseudoTCP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9ABE1F5119A499930096298B /* Debug */,
+				9ABE1F5219A499930096298B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9ABE1F5319A499930096298B /* Build configuration list for PBXNativeTarget "pseudoTCP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9ABE1F5419A499930096298B /* Debug */,
+				9ABE1F5519A499930096298B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9ABE1F4219A499930096298B /* Project object */;
+}
