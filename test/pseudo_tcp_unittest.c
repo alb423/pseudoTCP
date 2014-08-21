@@ -481,25 +481,119 @@ printf("line:%d elapsed=%d, (size,received)=(%d,%zu)\n", __LINE__, elapsed, size
    CU_ASSERT_EQUAL((size_t)size, received);
    CU_ASSERT_EQUAL(0, memcmp(MS_GetBuffer(_gpPTCPTest->send_stream_),
                      MS_GetBuffer(_gpPTCPTest->recv_stream_), size));
-printf("line:%d\n", __LINE__);
+
    char pTmp[1024];
    if(elapsed!=0)
       sprintf(pTmp, "Transferred %zu bytes in %d ms ( %d Kbps)", received, elapsed, size * 8 / elapsed);
    else
       sprintf(pTmp, "Transferred %zu bytes in 0 ms ( 0 Kbps)", received);
       
-   LOG(LS_VERBOSE, pTmp);
+   printf("%s\n",pTmp);
 }
 
 
-// Test the usage of MessageQueue 
+    
+void OnMessage_01_01(tMessage* message) {
+    //LOG(LS_INFO, "OnMessage_01_01\n");
+
+    static int i=0;
+    if(i==0) {CU_ASSERT_EQUAL(message->message_id, 3);}
+    else if(i==1) {CU_ASSERT_EQUAL(message->message_id, 0);}
+    else if(i==2) {CU_ASSERT_EQUAL(message->message_id, 1);}
+    else if(i==3) {CU_ASSERT_EQUAL(message->message_id, 4);}
+    else if(i==4) {CU_ASSERT_EQUAL(message->message_id, 2);}
+    printf("message->message_id = %d\n",message->message_id);
+    i++;
+}
+    
+// Test the usage of MessageQueue
 void PseudoTcpTest_01_01(void)
 {
-/*
-   U32 i, now;
+    U32 i, now;
+    bool bFlag = false;
+    
+#if 0
+    tMessage *pMsg = NULL;
+    tDelayMessage *pDMsg = NULL;
+    tMI_PQNODE *pPQNode = NULL;
+    tMI_PQUEUE *pPQueue = malloc(sizeof(tMI_PQUEUE));
+
+    PQueue_Init(pPQueue);
+
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    for (i=0; i<5; ++i) {
+        pMsg = malloc(sizeof(tMessage));
+        if(pMsg) {
+            tMessageData *pData = malloc(sizeof(tMessageData));
+            pMsg->phandler = NULL;
+            pMsg->message_id = i;
+            pMsg->pData = pData;
+            
+            pDMsg = malloc(sizeof(tDelayMessage));
+            if(pDMsg) {
+                pDMsg->cmsDelay  = 1024;
+                pDMsg->msTrigger  = 4196;
+                pDMsg->num  = i;
+                pDMsg->pMsg  = pMsg;
+            }
+            PQueue_Push(pPQueue, &pDMsg->PQNode);
+        }
+    }
+    
+    CU_ASSERT_EQUAL(5, PQueue_Size(pPQueue));
+    for (i=0; i<5; ++i) {
+        pDMsg = PQueue_Pop(pPQueue);
+        CU_ASSERT_EQUAL(i, pDMsg->pMsg->message_id);
+        CU_ASSERT_EQUAL(1024, pDMsg->cmsDelay);
+        CU_ASSERT_EQUAL(4196, pDMsg->msTrigger);
+    }
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+
+    
+    for (i=0; i<10; ++i) {
+        pMsg = malloc(sizeof(tMessage));
+        if(pMsg) {
+            tMessageData *pData = malloc(sizeof(tMessageData));
+            pMsg->phandler = NULL;
+            pMsg->message_id = i;
+            pMsg->pData = pData;
+            
+            pDMsg = malloc(sizeof(tDelayMessage));
+            if(pDMsg) {
+                if(i%2)
+                    pDMsg->cmsDelay  = 1024+i;
+                else
+                    pDMsg->cmsDelay  = 1024;
+                pDMsg->msTrigger  = 4196;
+                pDMsg->num  = i;
+                pDMsg->pMsg  = pMsg;
+            }
+            PQueue_Push(pPQueue, &pDMsg->PQNode);
+        }
+    }
+    CU_ASSERT_EQUAL(10, PQueue_Size(pPQueue));
+    
+    pPQNode = &(PQueue_Top(pPQueue)->PQNode);
+    CU_ASSERT_PTR_NOT_NULL(pPQNode);
+    
+//    if(pPQNode->h.next)
+//        pPQNode = pPQNode->h.next;
+//    else
+        pPQNode = pPQNode->v.next;
+    
+    pPQNode = PQueue_Erase(pPQueue, pPQNode);
+    CU_ASSERT_PTR_NOT_NULL(pPQNode);
+    CU_ASSERT_EQUAL(9, PQueue_Size(pPQueue));
+
+    for (i=0; i<9; ++i) {
+        pDMsg = PQueue_Pop(pPQueue);
+        CU_ASSERT_PTR_NOT_NULL(pDMsg);
+    }
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+
+   // Test MQueue
    tMessageQueue *q = malloc(sizeof(tMessageQueue));
-   bool bFlag = false;
-   q = MQueue_Init(NULL);
+   q = MQueue_Init(OnMessage_01_01);
    
    now = Time();
    MQueue_PostAt(q, now, NULL, 3);
@@ -508,17 +602,11 @@ void PseudoTcpTest_01_01(void)
    MQueue_PostAt(q, now, NULL, 4);
    MQueue_PostAt(q, now - 1, NULL, 2);
 
-   tMessage msg;
-   for (i=0; i<5; ++i) {
-      memset(&msg, 0, sizeof(msg));
-      bFlag = MQueue_Get(q, &msg, 0, 0);
-      CU_ASSERT_EQUAL(true, bFlag);
-      CU_ASSERT_EQUAL(i, msg.message_id);
-   }
-
-   CU_ASSERT_EQUAL(false, MQueue_Get(q, &msg, 0, 0));  // No more messages
+   // wait OnMessage_01_01() to check receive message
+   SleepMs(1000);
+    
    MQueue_Destroy(q);
-*/   
+#endif
 }
 
 void PseudoTcpTest_01_02(void)
@@ -536,9 +624,12 @@ void PseudoTcpTest_01_02(void)
    
    SetLocalMtu(1500);
    SetRemoteMtu(1500);
-   TestTransfer_01(1024);
-   //TestTransfer_01(1400);
-   //TestTransfer_01(1500);
+
+   // When size > 1443 (1500-PACKET_OVERHEAD), the data need demutiplex
+   //TestTransfer_01(1024);
+   //TestTransfer_01(1443);
+   TestTransfer_01(1500);
+   
    //TestTransfer_01(1000000);
     
    PseudoTcpTestBase_Destroy(pTest);

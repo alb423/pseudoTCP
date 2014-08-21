@@ -223,12 +223,12 @@ tMI_DLNODE *MList_Erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 //  its first element is always the greatest of the elements it container
 // Returns a reference to the first element in the list container.
 
-// sort by Trigger time
+// sort by cmsDelay time
 static S32 _priority(const tMI_PQNODE *pNode)
 {
    tDelayMessage * vpTCtxt;
    vpTCtxt = MI_NODEENTRY(pNode, tDelayMessage, PQNode);
-   return vpTCtxt->msTrigger;
+   return vpTCtxt->cmsDelay;
 }
 
 void PQueue_Init(tMI_PQUEUE *pPQueue)
@@ -302,47 +302,149 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
       }
       else {
          tMI_PQNODE *scan = pQ->head;
-
+         S32 priority = pQ->priority(pNode);
+          
          while (scan) {
             // remove node
             if(pNode == scan) {
                tMI_PQNODE *vpN = scan;
                
-               if (vpN->h.next == 0) {
-                  if(pQ->head == vpN)
-                     pQ->head = vpN->v.next;
-                  if(pQ->tail == vpN) {
-                     if(vpN->h.previous == 0)
+                // remove head
+                if (pQ->head == vpN) {
+                    if (vpN->h.next == 0) {
+                        pQ->head = vpN->v.next;
+                        if (vpN->v.next == 0) {
+                            pQ->tail = 0;
+                        }
+                        else {
+                            vpN->v.next->v.previous = vpN->v.previous;
+                        }
+                    }
+                    else {
+                        pQ->head = vpN->h.next;
+                        vpN->h.next->v.previous = 0;
+                        vpN->h.next->v.next = vpN->v.next;
+                        
+                        if (vpN->h.previous == vpN->h.next ) {
+                            vpN->h.next->h.previous = 0;
+                        }
+                        else {
+                            vpN->h.next->h.previous = vpN->h.previous;
+                        }
+                        
+                        if (vpN->v.next == 0) {
+                            pQ->tail = vpN->h.next;
+                        }
+                        else {
+                            vpN->v.next->v.previous = vpN->h.next;
+                        }
+                    }
+                }
+                // remove tail
+                else if(pQ->tail == vpN) {
+                    if (vpN->h.previous == 0) {
                         pQ->tail = vpN->v.previous;
-                     else
-                        pQ->tail = vpN->h.previous;
-                  }
-                   
-                  if (vpN->v.next == 0) {
-                     if (vpN->v.previous != 0)
-                        vpN->v.previous->v.next = vpN->v.next;
-                  }
-                  else {
-                     vpN->v.next->v.previous = vpN->v.previous;
-                     if (vpN->v.previous != 0)
-                        vpN->v.previous->v.next = vpN->v.next;                     
-                  }                  
-               }
-               else {
-                  if(pQ->head == vpN)
-                      pQ->head = vpN->h.next;
-                  if(pQ->tail == vpN) {
-                       if(vpN->h.previous == 0)
-                           pQ->tail = vpN->v.previous;
-                       else
-                           pQ->tail = vpN->h.previous;
-                  }
-                     
-                  vpN->h.next->h.previous = vpN->h.previous;
-                  if (vpN->h.previous != 0)
-                     vpN->h.previous->h.next = vpN->h.next;   
-                     
-               }
+                        if (vpN->v.previous == 0) {
+                            pQ->head = 0;
+                        }
+                        else {
+                            vpN->v.previous->v.next = 0;
+                        }
+                    }
+                    else {
+                        //pQ->tail = vpN->h.previous;
+                        vpN->h.previous->h.next = 0;
+                        
+                        if (vpN->v.previous == 0) {
+                            //vpN->h.previous->h.next = vpN->h.next;
+                        }
+                        else {
+                            vpN->v.previous->v.next = 0;
+                        }
+                    }
+                }
+                // remove items not head and tail
+                else {
+                    if (vpN->h.next == 0) {
+                        if (vpN->v.next == 0) {
+                            // This is tail node
+                            ASSERT(pQ->tail == vpN);
+                        }
+                        else {
+                            if (vpN->h.previous == 0) {
+                                if (vpN->v.previous == 0) {
+                                    // This is head node
+                                    ASSERT(pQ->head == vpN);
+                                }
+                                else {
+                                    vpN->v.previous->v.next = vpN->v.next;
+                                }
+                            }
+                            else {
+                                vpN->h.previous->h.next = vpN->h.next;
+                                if (vpN->v.previous == 0) {
+                                    // do nothing;
+                                }
+                                else {
+                                    vpN->v.previous->v.next = vpN->v.next;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        if (vpN->v.next == 0) {
+                            if (vpN->h.previous == 0) {
+                                if (vpN->v.previous == 0) {
+                                    // This is head node
+                                    ASSERT(pQ->head == vpN);
+                                }
+                                else {
+                                    vpN->v.previous->v.next = vpN->h.next;
+                                }
+                            }
+                            else {
+                                vpN->h.previous->h.next = vpN->h.next;
+                                vpN->h.next->h.previous = vpN->h.previous;
+                                if (vpN->v.previous == 0) {
+                                    // do nothing
+                                }
+                                else {
+                                    // This should no happen
+                                    ASSERT(vpN->v.previous != 0);
+                                    //vpN->v.previous->v.next = vpN->h.previous;
+                                    //vpN->v.next->v.previous = vpN->h.next;
+                                }
+                            }
+                        }
+                        else {
+                            if (vpN->h.previous == 0) {
+                                if (vpN->v.previous == 0) {
+                                    // This is head node
+                                    ASSERT(pQ->head == vpN);
+                                }
+                                else {
+                                    vpN->h.next->h.previous = 0;
+                                    vpN->v.previous->v.next = vpN->h.next;
+                                    vpN->v.next->v.previous = vpN->h.next;
+                                }
+                            }
+                            else {
+                                if (vpN->v.previous == 0) {
+                                    ASSERT(vpN->v.previous == 0);
+                                    // This should no happen
+                                    //vpN->h.previous->h.next = vpN->h.previous;
+                                    //vpN->h.next->h.previous = vpN->h.next;
+                                }
+                                else {
+                                    // This should no happen
+                                    ASSERT(vpN->v.previous != 0);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                
                pQ->count--;
                printf("PQueue_Erase() after erase, count=%d head=0x0%x tail=0x0%x\n", pQ->count, (U32)pQ->head, (U32)pQ->tail);
                if (vpN->h.next == 0)
@@ -352,7 +454,14 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                   
             } 
             else {
-               scan = scan->v.next;
+               S32 thisprio = pQ->priority(scan);
+                
+                if (priority == thisprio) {
+                   scan = scan->h.next;
+                }
+                else {
+                   scan = scan->v.next;
+                }
                // h.next is used to hold the element with the same priority
             }
          }
@@ -411,12 +520,14 @@ void MQueue_Destroy(tMessageQueue *vpIn) {
       pthread_mutex_destroy(&_mutex);
       pthread_cond_destroy(&_cond);
       
+//#if 1
       pthread_exit(NULL);
-      /*
-      int vReturn;
-      void *res;
-      vReturn = pthread_join(&_thread, &res);
-      */
+//#else
+//      int vReturn;
+//      void *res;
+//      vReturn = pthread_join(&vpIn->thread, &res);
+//#endif
+       
       Event_Destroy();
       
       free(vpIn);

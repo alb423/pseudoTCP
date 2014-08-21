@@ -314,7 +314,7 @@ int PTCP_Connect(tPseudoTcp *pPTCP) {
    }
 
    pPTCP->m_state = TCP_SYN_SENT;
-   LOG(LS_INFO, "State: TCP_SYN_SENT");
+   LOG(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_SENT");
 
    queueConnectMessage(pPTCP);
    attemptSend(pPTCP, sfNone);
@@ -627,7 +627,7 @@ tWriteResult PTCP_Packet(tPseudoTcp *pPTCP, U32 seq, U8 flags, U32 offset, U32 l
 
 #if _DEBUGMSG >= _DBG_VERBOSE
    char pTmpBuf[1024]={0};
-   sprintf(pTmpBuf, "\n<-- <CONV=%d><FLG=%d><SEQ=seq%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>",\
+   sprintf(pTmpBuf, "\n<-- <CONV=%d><FLG=%d><SEQ=%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>",\
    pPTCP->m_conv, (unsigned)flags, (seq + len), pPTCP->m_rcv_nxt, pPTCP->m_rcv_wnd, (now % 10000), (pPTCP->m_ts_recent % 10000), len);     
    LOG(LS_VERBOSE, pTmpBuf);
 #endif // _DEBUGMSG
@@ -672,7 +672,7 @@ bool PTCP_Parse(tPseudoTcp *pPTCP, const U8* buffer, U32 size) {
 
 #if _DEBUGMSG >= _DBG_VERBOSE
    char pTmp[1024] = {0};
-   sprintf(pTmp, "--> <CONV=%d><FLG=%d><SEQ=%d:%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>", \
+   sprintf(pTmp, "\n--> <CONV=%d><FLG=%d><SEQ=%d:%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>", \
       seg.conv, (unsigned)seg.flags, seg.seq, seg.seq + seg.len, seg.ack, seg.wnd,\
       (seg.tsval % 10000), (seg.tsecr % 10000), seg.len);
     LOG(LS_INFO, pTmp);
@@ -766,12 +766,12 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
          parseOptions(pPTCP, &pSeg->data[1], pSeg->len - 1);
          if (pPTCP->m_state == TCP_LISTEN) {
             pPTCP->m_state = TCP_SYN_RECEIVED;
-            LOG(LS_INFO, "State: TCP_SYN_RECEIVED");
+            LOG(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_RECEIVED");
             //pPTCP->associate(addr);
             queueConnectMessage(pPTCP);
          } else if (pPTCP->m_state == TCP_SYN_SENT) {
                pPTCP->m_state = TCP_ESTABLISHED;
-               LOG(LS_INFO, "State: TCP_ESTABLISHED");
+               LOG(LS_INFO, "State: TCP_SYN_SENT -> TCP_ESTABLISHED");
                adjustMTU(pPTCP);
                //pPTCP->OnTcpOpen(this);
                pPTCP->OnTcpOpen(pPTCP);
@@ -908,7 +908,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
    // !?! A bit hacky
    if ((pPTCP->m_state == TCP_SYN_RECEIVED) && !bConnect) {
       pPTCP->m_state = TCP_ESTABLISHED;
-      LOG(LS_INFO, "State: TCP_ESTABLISHED");
+      LOG(LS_INFO, "State: TCP_SYN_RECEIVED -> TCP_ESTABLISHED");
       adjustMTU(pPTCP);
       //pPTCP->OnTcpOpen(this);
       pPTCP->OnTcpOpen(pPTCP);
@@ -1195,8 +1195,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
       }
 
 #if _DEBUGMSG >= _DBG_VERBOSE
-      //if (bFirst) {
-      {
+      if (bFirst) {
          size_t available_space = 0;
          FIFO_GetWriteRemaining(pPTCP->m_sbuf, &available_space);
 
