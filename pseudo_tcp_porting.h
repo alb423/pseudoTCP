@@ -51,10 +51,13 @@ if(sev <= LS_VERBOSE) fprintf(stderr, "%s, %s:%d, %s\n", __FILE__, __FUNCTION__,
 
 
 */
+
+/*
 #define LOG(sev,x) \
 if(sev <= LS_VERBOSE) printf("%s, %s:%d, %s\n", __FILE__, __FUNCTION__, __LINE__, x);
-        
-
+*/
+    
+#define LOG(sev,x)
 #define LOG_F(sev, x) LOG(sev, x)
 
 /*

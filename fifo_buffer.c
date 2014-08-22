@@ -104,11 +104,13 @@ tFIFO_BUFFER * FIFO_Create(size_t length, tFIFO_CB pReadCB, tFIFO_CB pWriteCB)
          vpPtr->pNotifyReadCB = pReadCB;
          vpPtr->pNotifyWriteCB = pWriteCB;          
          
-         pthread_mutexattr_t mutex_attribute;
-         pthread_mutexattr_init(&mutex_attribute);
-         pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_RECURSIVE);
-         pthread_mutex_init(&vpPtr->mutex, &mutex_attribute);
-         pthread_mutexattr_destroy(&mutex_attribute);         
+//         pthread_mutexattr_t mutex_attribute;
+//         pthread_mutexattr_init(&mutex_attribute);
+//         pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_RECURSIVE);
+//         pthread_mutex_init(&vpPtr->mutex, &mutex_attribute);
+//         pthread_mutexattr_destroy(&mutex_attribute);
+          
+         pthread_mutex_init(&vpPtr->mutex, NULL);
       }
       return vpPtr;
    }
@@ -173,7 +175,7 @@ bool FIFO_GetBuffered(tFIFO_BUFFER *pFifo, size_t* size)
    if(!pFifo)
       return false;  
       
-   pthread_mutex_lock(&pFifo->mutex);      
+   pthread_mutex_lock(&pFifo->mutex);
    *size = pFifo->data_length;
    pthread_mutex_unlock(&pFifo->mutex);
    

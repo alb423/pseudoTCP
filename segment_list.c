@@ -190,7 +190,8 @@ tMI_DLNODE *SEGMENT_LIST_erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 // inserting new elements before the element at the specified position
 void SEGMENT_LIST_insert(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2)
 {
-   MI_DlInsertBefore(pDList, pNode, pNode2);
+   //MI_DlInsertBefore(pDList, pNode, pNode2);
+   MI_DlInsertAfter(pDList, pNode, pNode2);
 }
 
 /*****************************************************************************/

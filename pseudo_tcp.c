@@ -43,7 +43,7 @@ extern "C" {
 #define _DBG_NONE     0
 #define _DBG_NORMAL   1
 #define _DBG_VERBOSE  2
-#define _DEBUGMSG _DBG_VERBOSE
+#define _DEBUGMSG _DBG_NONE
 
 
 // This is used to avoid warning message "unused variable"
@@ -598,11 +598,12 @@ tWriteResult PTCP_Packet(tPseudoTcp *pPTCP, U32 seq, U8 flags, U32 offset, U32 l
    U32 now = PTCP_Now();
 
    // talk_base::scoped_ptr<uint8[]> buffer(new uint8[MAX_PACKET]);
-   U8 *buffer = malloc(MAX_PACKET);
-   if(!buffer)
-      return WR_FAIL;
-   memset(buffer, 0, MAX_PACKET);
-      
+//   U8 *buffer = malloc(MAX_PACKET);
+//   if(!buffer)
+//      return WR_FAIL;
+//   memset(buffer, 0, MAX_PACKET);
+    
+   U8 buffer[MAX_PACKET] = {0};
    long_to_bytes(pPTCP->m_conv, &buffer[0]);
    long_to_bytes(seq, &buffer[4]);
    long_to_bytes(pPTCP->m_rcv_nxt, &buffer[8]);
@@ -1130,17 +1131,20 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now) {
       LOG(LS_VERBOSE, pTmp);
 
       //SSegment subseg(seg->seq + nTransmit, seg->len - nTransmit, seg->bCtrl);
-      tRSSegment *pRSSseg = malloc(sizeof(tRSSegment));
-      memset(pRSSseg, 0, sizeof(tRSSegment));
+      tRSSegment *pRSSeg = malloc(sizeof(tRSSegment));
+      memset(pRSSeg, 0, sizeof(tRSSegment));
       //subseg->tstamp = seg->tstamp;
-      pRSSseg->xmit = seg->xmit;
+      pRSSeg->seq = seg->seq + nTransmit;
+      pRSSeg->len = seg->len - nTransmit;
+      pRSSeg->bCtrl = seg->bCtrl;
+      pRSSeg->xmit = seg->xmit;
       seg->len = nTransmit;
 
       //SList::iterator next = seg;
       //pPTCP->m_slist.insert(++next, subseg);
       
       tRSSegment *next = seg;
-      SEGMENT_LIST_insert(pPTCP->m_slist, &next->DLNode, &pRSSseg->DLNode);
+      SEGMENT_LIST_insert(pPTCP->m_slist, &next->DLNode, &pRSSeg->DLNode);
       
    }
 
@@ -1171,7 +1175,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
 #endif // _DEBUGMSG
 
    while (true) {
-      LOG(LS_INFO, "while (true)");
+      //LOG(LS_INFO, "while (true)");
       U32 cwnd = pPTCP->m_cwnd;
       if ((pPTCP->m_dup_acks == 1) || (pPTCP->m_dup_acks == 2)) { // Limited Transmit
          cwnd += pPTCP->m_dup_acks * pPTCP->m_mss;
@@ -1232,6 +1236,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
       // Find the next segment to transmit
       //SList::iterator it = pPTCP->m_slist.begin();
       tRSSegment *it = SEGMENT_LIST_begin(pPTCP->m_slist);
+      //printf("pPTCP->m_slist->count = %d\n", pPTCP->m_slist->count);
       if(it)
       {
          while (it->xmit > 0) {
@@ -1242,7 +1247,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
             {
                it = MI_NODEENTRY(it->DLNode.next, tRSSegment, DLNode);
             }
-            ASSERT(it->DLNode.next != NULL);
+            //ASSERT(it->DLNode.next != NULL);
          }
          //SList::iterator seg = it;
          tRSSegment *seg = it;
@@ -1259,10 +1264,10 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
             
             //pPTCP->m_slist.insert(++it, subseg);
             SEGMENT_LIST_insert(pPTCP->m_slist, &it->DLNode, &pRSSeg->DLNode);
-
+            //printf("pPTCP->m_slist->count = %d\n", pPTCP->m_slist->count);
          }
 
-         LOG(LS_INFO, "transmit(pPTCP, seg, now)");
+         //LOG(LS_INFO, "transmit(pPTCP, seg, now)");
          if (!transmit(pPTCP, seg, now)) {
             LOG(LS_ERROR, "transmit failed");
             // TODO: consider closing socket

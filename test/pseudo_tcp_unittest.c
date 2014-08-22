@@ -29,6 +29,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 /*** PROJECT INCLUDES ********************************************************/
@@ -83,7 +84,7 @@ void SleepMs(int msecs) {
     res = (ex); \
     /* printf("res=%d, start=%d, timeout=%d Total=%d\n", res, start, timeout, (start + timeout)); */\
     while (!res && (Time() < start + timeout)) { \
-      printf("current=%d, timeout=%d \n", Time(), (start + timeout)); \
+      /* printf("current=%d, timeout=%d \n", Time(), (start + timeout)); */ \
       MQueue_ProcessMessages(_gpPTCPTest->msq, 1); \
       res = (ex); \
     } \
@@ -243,18 +244,18 @@ void UpdateClock(tPseudoTcp* pPTCP, U32 message) {
 
 void UpdateLocalClock() 
 { 
-   LOG(LS_INFO, "UpdateClock(_gpLocal, MSG_LCLOCK)");
+   //LOG(LS_INFO, "UpdateClock(_gpLocal, MSG_LCLOCK)");
    UpdateClock(_gpLocal, MSG_LCLOCK); 
 }
 void UpdateRemoteClock() 
 { 
-   LOG(LS_INFO, "UpdateClock(_gpRemote, MSG_RCLOCK)");
+   //LOG(LS_INFO, "UpdateClock(_gpRemote, MSG_RCLOCK)");
    UpdateClock(_gpRemote, MSG_RCLOCK); 
 }
 
 
 void OnMessage(tMessage* message) {
-   LOG(LS_INFO, "OnMessage\n");
+   //LOG(LS_INFO, "OnMessage\n");
    switch (message->message_id) {
       case MSG_LPACKET: {
          PTCP_NotifyPacket(_gpLocal, message->pData->pVal, message->pData->len);
@@ -309,12 +310,12 @@ void ReadData() {
    do {
       rcvd = PTCP_Recv(_gpRemote, block, sizeof(block));
       if (rcvd != -1) {
-         char pTmp[1024]={0};
+         //char pTmp[1024]={0};
          MS_Write(_gpPTCPTest->recv_stream_ , block, rcvd, NULL, NULL);
          MS_GetPosition(_gpPTCPTest->recv_stream_ , &position);
          
-         sprintf(pTmp,"Received: %zu\n",position);
-         LOG(LS_VERBOSE, pTmp);
+         //sprintf(pTmp,"Received: %zu\n",position);
+         //LOG(LS_VERBOSE, pTmp);
       }
    } while (rcvd > 0);
 }
@@ -334,7 +335,7 @@ void WriteData(bool* done) {
             MS_SetPosition(_gpPTCPTest->send_stream_, position + sent);
             memset(pTmp, 0, 1024);
             sprintf(pTmp,"Sent: %zu\n", position + sent);
-            LOG(LS_VERBOSE, pTmp);         
+            LOG(LS_VERBOSE, pTmp);
          } else {
             MS_SetPosition(_gpPTCPTest->send_stream_, position);
             LOG(LS_INFO, "Flow Controlled");
@@ -349,8 +350,8 @@ void WriteData(bool* done) {
 }
 
 void OnTcpReadable_01(tPseudoTcp* tcp) {
-    if (tcp == _gpRemote) { LOG(LS_INFO, "_gpRemote"); }
-    else { LOG(LS_INFO, "_gpLocal"); }
+    //if (tcp == _gpRemote) { LOG(LS_INFO, "_gpRemote"); }
+    //else { LOG(LS_INFO, "_gpLocal"); }
     
    // Stream bytes to the recv stream as they arrive.
    if (tcp == _gpRemote) {
@@ -402,8 +403,8 @@ void OnTcpClosed_01(tPseudoTcp* pPTCP, U32 error) {
    // Consider ourselves closed when the remote side gets OnTcpClosed.
    // TODO: OnTcpClosed is only ever notified in case of error in
    // the current implementation.  Solicited close is not (yet) supported.
-    if (pPTCP == _gpRemote) { LOG(LS_INFO, "_gpRemote"); }
-    else { LOG(LS_INFO, "_gpLocal"); }
+   //if (pPTCP == _gpRemote) { LOG(LS_INFO, "_gpRemote"); }
+   //else { LOG(LS_INFO, "_gpLocal"); }
    CU_ASSERT_EQUAL(0U, error);
    if (pPTCP == _gpRemote) {
       _gpPTCPTest->have_disconnected_ = true;
@@ -414,9 +415,9 @@ void OnTcpClosed_01(tPseudoTcp* pPTCP, U32 error) {
 tWriteResult TcpWritePacket_01(tPseudoTcp* pPTCP, const char* buffer, size_t len) {
    
    char pTmp[1024]={0};
-   if (pPTCP == _gpRemote) { sprintf(pTmp, "_gpRemote MSG_RPACKET delay_=%d", _gpPTCPTest->delay_);}
-   else { sprintf(pTmp, "_gpLocal MSG_LPACKET delay_=%d", _gpPTCPTest->delay_);}
-   LOG(LS_VERBOSE, pTmp);
+//   if (pPTCP == _gpRemote) { sprintf(pTmp, "_gpRemote MSG_RPACKET delay_=%d", _gpPTCPTest->delay_);}
+//   else { sprintf(pTmp, "_gpLocal MSG_LPACKET delay_=%d", _gpPTCPTest->delay_);}
+//   LOG(LS_VERBOSE, pTmp);
 
    // Randomly drop the desired percentage of packets.
    // Also drop packets that are larger than the configured MTU.
@@ -465,11 +466,11 @@ void TestTransfer_01(int size) {
 
 
    EXPECT_TRUE_WAIT(_gpPTCPTest->have_connected_, kConnectTimeoutMs);
-printf("line:%d\n", __LINE__);
+printf("line:%d _gpPTCPTest->have_connected_=%d\n", __LINE__, _gpPTCPTest->have_connected_);
    // Sending will start from OnTcpWriteable and complete when all data has
    // been received.
    EXPECT_TRUE_WAIT(_gpPTCPTest->have_disconnected_, kTransferTimeoutMs);
-printf("line:%d\n", __LINE__);
+printf("line:%d _gpPTCPTest->have_disconnected_=%d\n", __LINE__, _gpPTCPTest->have_disconnected_);
    
    elapsed = TimeSince(start);
    MS_GetSize(_gpPTCPTest->recv_stream_, &received);
@@ -506,38 +507,49 @@ void OnMessage_01_01(tMessage* message) {
     i++;
 }
     
+    
+    
 // Test the usage of MessageQueue
+static void _Push_PQNode(tMI_PQUEUE *pPQueue, int id, tMessageData *pData, int cmsDelay, int msTrigger, int num) {
+    tMessage *pMsg;
+    tDelayMessage *pDMsg;
+    pMsg = malloc(sizeof(tMessage));
+    if(pMsg) {
+        //tMessageData *pData = malloc(sizeof(tMessageData));
+        pMsg->phandler = NULL;
+        pMsg->message_id = id;
+        if(pData)
+            pMsg->pData = pData;
+        
+        pDMsg = malloc(sizeof(tDelayMessage));
+        if(pDMsg) {
+            pDMsg->cmsDelay  = cmsDelay;
+            pDMsg->msTrigger  = msTrigger;
+            pDMsg->num  = num;
+            pDMsg->pMsg  = pMsg;
+        }
+        PQueue_Push(pPQueue, &pDMsg->PQNode);
+    }
+}
+    
+    
 void PseudoTcpTest_01_01(void)
 {
+
     U32 i, now;
     bool bFlag = false;
-    
-#if 0
+
     tMessage *pMsg = NULL;
     tDelayMessage *pDMsg = NULL;
     tMI_PQNODE *pPQNode = NULL;
     tMI_PQUEUE *pPQueue = malloc(sizeof(tMI_PQUEUE));
 
+    tMI_PQNODE *pItem1, *pItem2, *pItem3, *pItem4, *pItem5;
     PQueue_Init(pPQueue);
-
+#if 0
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
     for (i=0; i<5; ++i) {
-        pMsg = malloc(sizeof(tMessage));
-        if(pMsg) {
-            tMessageData *pData = malloc(sizeof(tMessageData));
-            pMsg->phandler = NULL;
-            pMsg->message_id = i;
-            pMsg->pData = pData;
-            
-            pDMsg = malloc(sizeof(tDelayMessage));
-            if(pDMsg) {
-                pDMsg->cmsDelay  = 1024;
-                pDMsg->msTrigger  = 4196;
-                pDMsg->num  = i;
-                pDMsg->pMsg  = pMsg;
-            }
-            PQueue_Push(pPQueue, &pDMsg->PQNode);
-        }
+        _Push_PQNode(pPQueue, i, NULL, 1024, 4196, i);
     }
     
     CU_ASSERT_EQUAL(5, PQueue_Size(pPQueue));
@@ -551,25 +563,10 @@ void PseudoTcpTest_01_01(void)
 
     
     for (i=0; i<10; ++i) {
-        pMsg = malloc(sizeof(tMessage));
-        if(pMsg) {
-            tMessageData *pData = malloc(sizeof(tMessageData));
-            pMsg->phandler = NULL;
-            pMsg->message_id = i;
-            pMsg->pData = pData;
-            
-            pDMsg = malloc(sizeof(tDelayMessage));
-            if(pDMsg) {
-                if(i%2)
-                    pDMsg->cmsDelay  = 1024+i;
-                else
-                    pDMsg->cmsDelay  = 1024;
-                pDMsg->msTrigger  = 4196;
-                pDMsg->num  = i;
-                pDMsg->pMsg  = pMsg;
-            }
-            PQueue_Push(pPQueue, &pDMsg->PQNode);
-        }
+        if(i%2)
+            _Push_PQNode(pPQueue, i, NULL, 1024+i, 4196, i);
+        else
+            _Push_PQNode(pPQueue, i, NULL, 1024, 4196, i);
     }
     CU_ASSERT_EQUAL(10, PQueue_Size(pPQueue));
     
@@ -591,6 +588,103 @@ void PseudoTcpTest_01_01(void)
     }
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
 
+    // Test the erro found when interopate
+    // Case 1, PQueue content:
+    //     item1
+    //     item2
+    //     item3
+    
+    _Push_PQNode(pPQueue, 1, NULL, 0, 0, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 250, 250, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 100, 100, 3);
+
+    PQueue_Dump(pPQueue);
+    // remove item 2
+    PQueue_Erase(pPQueue, pPQueue->head->v.next);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->head->v.next);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->tail->v.previous);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    
+    
+    // Case 2, PQueue content:
+    //     item1
+    //     item2
+    //     item3
+    //     item4
+    //     item5
+    
+    _Push_PQNode(pPQueue, 1, NULL, 249, 249, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 250, 250, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 4000, 4000, 3);
+    _Push_PQNode(pPQueue, 4, NULL, 100, 100, 4);
+    _Push_PQNode(pPQueue, 5, NULL, 0, 0, 5);
+    
+    // remove item 2
+    PQueue_Erase(pPQueue, pPQueue->head->v.next);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->head->v.next);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->tail->v.previous);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    // Case 3, PQueue content:
+    //     item1
+    //     item2  item3
+    //     item4
+    
+    _Push_PQNode(pPQueue, 1, NULL, 10, 10, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 20, 20, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 20, 20, 3);
+    _Push_PQNode(pPQueue, 4, NULL, 30, 30, 4);
+    PQueue_Dump(pPQueue);
+    
+    // remove item 2
+    pItem1 = pPQueue->head;
+    pItem3 = pPQueue->head->v.next->h.next;
+    
+    PQueue_Erase(pPQueue, pPQueue->head->v.next);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem1);
+    CU_ASSERT_EQUAL(pPQueue->head->v.next, pItem3);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    
+    // Case 4, PQueue content:
+    //     item1
+    //     item2  item3
+    //     item4
+    
+    _Push_PQNode(pPQueue, 1, NULL, 10, 10, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 20, 20, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 20, 20, 3);
+    _Push_PQNode(pPQueue, 4, NULL, 30, 30, 4);
+    PQueue_Dump(pPQueue);
+    
+    // remove item 2
+    pItem1 = pPQueue->head;
+    pItem2 = pPQueue->head->v.next;
+    pItem3 = pPQueue->head->v.next->h.next;
+    pItem4 = pPQueue->head->v.next->v.next;
+    
+    PQueue_Erase(pPQueue, pItem2);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem1);
+    CU_ASSERT_EQUAL(pPQueue->head->v.next, pItem3);
+    
+    PQueue_Erase(pPQueue, pItem3);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem1);
+    CU_ASSERT_EQUAL(pPQueue->head->v.next, pItem4);
+    
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+#endif
+    
+    
+#if 0
    // Test MQueue
    tMessageQueue *q = malloc(sizeof(tMessageQueue));
    q = MQueue_Init(OnMessage_01_01);
@@ -603,7 +697,7 @@ void PseudoTcpTest_01_01(void)
    MQueue_PostAt(q, now - 1, NULL, 2);
 
    // wait OnMessage_01_01() to check receive message
-   SleepMs(1000);
+   sleep(1);
     
    MQueue_Destroy(q);
 #endif
@@ -611,6 +705,7 @@ void PseudoTcpTest_01_01(void)
 
 void PseudoTcpTest_01_02(void)
 {
+#if 1
    tPseudoTcpForTest *pTest;
    tIPseudoTcpNotify *notify = malloc(sizeof(tIPseudoTcpNotify));
    notify->OnTcpOpen       = (tOnTcpOpenCB)OnTcpOpen_01;
@@ -628,11 +723,14 @@ void PseudoTcpTest_01_02(void)
    // When size > 1443 (1500-PACKET_OVERHEAD), the data need demutiplex
    //TestTransfer_01(1024);
    //TestTransfer_01(1443);
-   TestTransfer_01(1500);
+   //TestTransfer_01(1500);
+   //TestTransfer_01(15000);
    
+   TestTransfer_01(100000);
    //TestTransfer_01(1000000);
-    
+   sleep(1);
    PseudoTcpTestBase_Destroy(pTest);
+#endif
 }
 
 

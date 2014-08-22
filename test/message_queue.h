@@ -117,7 +117,7 @@ extern void PQueue_Push(tMI_PQUEUE *pPQueue, tMI_PQNODE *pNode);
 extern tDelayMessage * PQueue_Pop(tMI_PQUEUE *pPQueue);
 extern tDelayMessage * PQueue_Top(tMI_PQUEUE *pPQueue);
 extern tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode);
-
+extern void PQueue_Dump(tMI_PQUEUE *pQ); // for debug
 
 // Message Queue 
 extern tMessageQueue * MQueue_Init(tOnMessageCB pCB);
