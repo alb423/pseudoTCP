@@ -328,6 +328,7 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
       }
       else {
          tMI_PQNODE *scan = pQ->head;
+         tMI_PQNODE *pVNode = scan;
          S32 priority = pQ->priority(pNode);
           
          while (scan) {
@@ -335,6 +336,7 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
             if(pNode == scan) {
                tMI_PQNODE *vpN = scan;
                
+#if 0
                 // remove head
                 if (pQ->head == vpN) {
                     if (vpN->h.next == 0) {
@@ -382,13 +384,28 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                     }
                     else {
                         printf("vpN->h.previous != 0\n");
-                        pQ->tail = vpN->v.previous;
+                        
                         if (vpN->v.previous != 0) {
-                           vpN->v.previous->v.next = vpN->v.next;
+                           vpN->v.previous->v.next = vpN->h.next;
+                            
+                           if(vpN->h.next) {
+                              //     item1
+                              //     item2
+                              //     item3  item4
+                              pQ->tail = vpN->h.next;
+                              vpN->h.next->v.previous = vpN->v.previous;
+                              vpN->h.next->h.previous = vpN->h.previous;
+                           }
+                           else {
+                              //     item1
+                              //     item2
+                              //     item3
+                              pQ->tail = vpN->v.previous;
+                           }
                         }
                         else {
                           // The node is head, should be handle in above case
-                          ASSERT(0);
+                          ASSERT(1!=1);
                         }
                     }
                 }
@@ -398,6 +415,8 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                         if (vpN->v.next == 0) {
                             if(vpN->h.previous) {
                                 vpN->h.previous->h.next = vpN->h.next;
+                                if(vpN->h.previous->h.previous==scan)
+                                    vpN->h.previous->h.previous = 0;
                             }
                             else {
                                 vpN->v.previous->v.next = vpN->v.next;
@@ -426,14 +445,6 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                                 vpN->v.previous->v.next = vpN->v.next;
                                 vpN->v.next->v.previous = vpN->v.previous;
                                 //vpN->h.previous->h.next = vpN->h.next;
-//                                if (vpN->v.previous == 0) {
-//                                    // do nothing;
-//                                    ASSERT(vpN->v.previous == 0);
-//                                }
-//                                else {
-//                                    vpN->v.previous->v.next = vpN->v.next;
-//                                    vpN->v.next->v.previous = vpN->v.previous;
-//                                }
                             }
                         }
                     }
@@ -469,13 +480,11 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                                     vpN->h.next->h.previous = 0;
                                     vpN->v.previous->v.next = vpN->h.next;
                                     vpN->v.next->v.previous = vpN->h.next;
-//                                    vpN->v.previous->v.next = vpN->v.next;
-//                                    vpN->v.next->v.previous = vpN->v.previous;
                                 }
                             }
                             else {
                                 if (vpN->v.previous == 0) {
-                                    ASSERT(vpN->v.previous == 0);
+                                    ASSERT(vpN->v.previous != 0);
                                 }
                                 else {
                                     // remove item2
@@ -483,8 +492,8 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                                     //     item2  item3
                                     //     item4
                                     
-                                    //vpN->h.next->h.previous = 0;
-                                    vpN->h.next->h.previous = vpN->h.previous;
+                                    if(vpN->h.previous!=scan)
+                                        vpN->h.next->h.previous = vpN->h.previous;
                                     
                                     vpN->v.previous->v.next = vpN->h.next;
                                     vpN->v.next->v.previous = vpN->h.next;
@@ -497,7 +506,64 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                         }
                     }
                 }
+
+#else
+                // remove item in horiental line
                 
+                // if the item is the last item in horiental line
+                if((vpN->h.previous==0) ||
+                   (vpN->h.previous==vpN)) {
+                    vpN->h.previous = vpN->h.next = 0;
+                    if(vpN->v.previous) {
+                        vpN->v.previous->v.next = vpN->v.next;
+                    }
+                    if(vpN->v.next) {
+                        vpN->v.next->v.previous = vpN->v.previous;
+                    }
+                    
+                    // change head and tail
+                    if(pQ->head==vpN) {
+                        pQ->head = vpN->v.next;
+                    }
+                    if(pQ->tail==vpN) {
+                        pQ->tail = vpN->v.previous;
+                    }
+                }
+                // if the item is the 1st item but not last item in horiental line
+                else if(vpN==pVNode) {
+                    if(vpN->h.next) {
+                        if(vpN->v.previous) {
+                            vpN->v.previous->v.next = vpN->h.next;
+                            vpN->h.next->v.previous = vpN->v.previous;
+                        }
+                        if(vpN->v.next) {
+                            vpN->v.next->v.previous = vpN->h.next;
+                            vpN->h.next->v.next = vpN->v.next;
+                        }
+                        vpN->h.next->h.previous = vpN->h.previous;
+                        //vpN->h.next = vpN->h.previous = 0;
+
+                        // change head and tail
+                        if(pQ->head==vpN) {
+                            pQ->head = vpN->h.next;
+                        }
+                        if(pQ->tail==vpN) {
+                            pQ->tail = vpN->h.previous;
+                        }
+                    }
+                }
+                else {
+                    if(vpN->h.previous) {
+                        vpN->h.previous->h.next = vpN->h.next;
+                        if(vpN->h.previous->h.previous==vpN)
+                            vpN->h.previous->h.previous = 0;
+                    }
+                    if(vpN->h.next) {
+                        vpN->h.next->h.previous = vpN->h.previous;
+                    }
+                }
+
+#endif
                 
                pQ->count--;
                printf("PQueue_Erase() after erase, count=%d head=0x%08x tail=0x%08x\n", pQ->count, (U32)pQ->head, (U32)pQ->tail);
@@ -508,7 +574,7 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                   return vpN->v.next;
                else
                   return vpN->h.next;
-                  
+                
             } 
             else {
                S32 thisprio = pQ->priority(scan);
@@ -518,6 +584,7 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                 }
                 else {
                    scan = scan->v.next;
+                   pVNode = scan;
                 }
                // h.next is used to hold the element with the same priority
             }
@@ -624,7 +691,7 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed) {
    {
       tMI_DLNODE *pDLNode = &pMsg->DLNode;
       for (; pDLNode != NULL;) {
-         printf("pMQueue:: pMsg->message_id=%d, id=%d\n", pMsg->message_id, id);         
+         //printf("pMQueue:: pMsg->message_id=%d, id=%d\n", pMsg->message_id, id);
          pMsg = MI_NODEENTRY(pDLNode, tMessage, DLNode);
          //if (it->Match(phandler, id)) {
          if (pMsg->message_id == id) {
@@ -767,17 +834,20 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
    tMessageHandler *phandler, U32 id, tMessageData *pData) {
     
    ASSERT(pIn != NULL);
-      
-   if (pIn->fStop)
-      return;
 
+   pthread_mutex_lock(&_mutex);
+   if (pIn->fStop) {
+      pthread_mutex_unlock(&_mutex);
+      return;
+   }
+    
    // Keep thread safe
    // Add to the priority queue. Gets sorted soonest first.
    // Signal for the multiplexer to return.
 
    //CritScope cs(&crit_);
    //LOG(LS_INFO, "pthread_mutex_lock _mutex");
-   pthread_mutex_lock(&_mutex);
+   //pthread_mutex_lock(&_mutex);
    tMessage *pMsg = malloc(sizeof(tMessage));
    if(pMsg) {
       pMsg->phandler = phandler;
@@ -889,10 +959,12 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
          // All queue operations need to be locked, but nothing else in this loop
          // (specifically handling disposed message) can happen inside the crit.
          // Otherwise, disposed MessageHandlers will cause deadlocks.
+          
+         pthread_mutex_lock(&_mutex);
          {
             //CritScope cs(&crit_);
             //LOG(LS_INFO, "pthread_mutex_lock _mutex");
-            pthread_mutex_lock(&_mutex);
+            //pthread_mutex_lock(&_mutex);
 
             // On the first pass, check for delayed messages that have been
             // triggered and calculate the next trigger time.
@@ -914,18 +986,19 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
             }
             // Pull a message off the message queue, if available.
             if (MList_Empty(&pIn->msgq)) {
-               //LOG(LS_INFO, "pthread_mutex_unlock _mutex"); 
-               pthread_mutex_unlock(&_mutex);
+                //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
+                pthread_mutex_unlock(&_mutex);
                break;
             } else {
                tMessage *pTmpMsg = MList_Front(&pIn->msgq);
                *pmsg = *pTmpMsg;
                MList_Pop_Front(&pIn->msgq);
             }
-            //LOG(LS_INFO, "pthread_mutex_unlock _mutex"); 
-            pthread_mutex_unlock(&_mutex);   
-         }  // crit_ is released here.
 
+         }  // crit_ is released here.
+         //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
+         pthread_mutex_unlock(&_mutex);
+          
          // Log a warning for time-sensitive messages that we're late to deliver.
          if (pmsg->ts_sensitive) {
             S32 delay = TimeDiff(msCurrent, pmsg->ts_sensitive);

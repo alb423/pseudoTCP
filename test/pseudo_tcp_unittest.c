@@ -546,8 +546,12 @@ void PseudoTcpTest_01_01(void)
 
     tMI_PQNODE *pItem1, *pItem2, *pItem3, *pItem4, *pItem5;
     PQueue_Init(pPQueue);
+    
+    
 #if 0
+
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    
     for (i=0; i<5; ++i) {
         _Push_PQNode(pPQueue, i, NULL, 1024, 4196, i);
     }
@@ -588,52 +592,72 @@ void PseudoTcpTest_01_01(void)
     }
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
 
+
     // Test the erro found when interopate
     // Case 1, PQueue content:
     //     item1
     //     item2
     //     item3
+    // remove item 1
+    
+    _Push_PQNode(pPQueue, 1, NULL, 0, 0, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 250, 250, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 100, 100, 3);
+    
+    PQueue_Dump(pPQueue);
+    
+    PQueue_Erase(pPQueue, pPQueue->head);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->head->v.next);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->tail->v.previous);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    
+    // Test the erro found when interopate
+    // Case 1, PQueue content:
+    //     item1
+    //     item2
+    //     item3
+    // remove item 2
+    
+    _Push_PQNode(pPQueue, 1, NULL, 0, 0, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 250, 250, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 100, 100, 3);
+    
+    PQueue_Dump(pPQueue);
+    
+    PQueue_Erase(pPQueue, pPQueue->head);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->head->v.next);
+    CU_ASSERT_PTR_NOT_NULL(pPQueue->tail->v.previous);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    
+    // Case 3, PQueue content:
+    //     item1
+    //     item2
+    //     item3
+    // remove item 3
     
     _Push_PQNode(pPQueue, 1, NULL, 0, 0, 1);
     _Push_PQNode(pPQueue, 2, NULL, 250, 250, 2);
     _Push_PQNode(pPQueue, 3, NULL, 100, 100, 3);
 
     PQueue_Dump(pPQueue);
-    // remove item 2
-    PQueue_Erase(pPQueue, pPQueue->head->v.next);
+
+    PQueue_Erase(pPQueue, pPQueue->head->v.next->v.next);
     CU_ASSERT_PTR_NOT_NULL(pPQueue->head->v.next);
     CU_ASSERT_PTR_NOT_NULL(pPQueue->tail->v.previous);
     PQueue_Pop(pPQueue);
     PQueue_Pop(pPQueue);
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
     
-    
-    // Case 2, PQueue content:
-    //     item1
-    //     item2
-    //     item3
-    //     item4
-    //     item5
-    
-    _Push_PQNode(pPQueue, 1, NULL, 249, 249, 1);
-    _Push_PQNode(pPQueue, 2, NULL, 250, 250, 2);
-    _Push_PQNode(pPQueue, 3, NULL, 4000, 4000, 3);
-    _Push_PQNode(pPQueue, 4, NULL, 100, 100, 4);
-    _Push_PQNode(pPQueue, 5, NULL, 0, 0, 5);
-    
-    // remove item 2
-    PQueue_Erase(pPQueue, pPQueue->head->v.next);
-    CU_ASSERT_PTR_NOT_NULL(pPQueue->head->v.next);
-    CU_ASSERT_PTR_NOT_NULL(pPQueue->tail->v.previous);
-    PQueue_Pop(pPQueue);
-    PQueue_Pop(pPQueue);
-    PQueue_Pop(pPQueue);
-    PQueue_Pop(pPQueue);
-    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
-    // Case 3, PQueue content:
+
+    // Case 4, PQueue content:
     //     item1
     //     item2  item3
     //     item4
+    // remove item 1
     
     _Push_PQNode(pPQueue, 1, NULL, 10, 10, 1);
     _Push_PQNode(pPQueue, 2, NULL, 20, 20, 2);
@@ -641,7 +665,32 @@ void PseudoTcpTest_01_01(void)
     _Push_PQNode(pPQueue, 4, NULL, 30, 30, 4);
     PQueue_Dump(pPQueue);
     
+    pItem1 = pPQueue->head;
+    pItem2 = pPQueue->head->v.next;
+    pItem3 = pPQueue->head->v.next->h.next;
+    pItem4 = pPQueue->head->v.next->v.next;
+    PQueue_Erase(pPQueue, pPQueue->head);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem2);
+    CU_ASSERT_EQUAL(pPQueue->head->h.next, pItem3);
+    CU_ASSERT_EQUAL(pPQueue->head->v.next, pItem4);
+    
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+  
+    // Case 5, PQueue content:
+    //     item1
+    //     item2  item3
+    //     item4
     // remove item 2
+    
+    _Push_PQNode(pPQueue, 1, NULL, 10, 10, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 20, 20, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 20, 20, 3);
+    _Push_PQNode(pPQueue, 4, NULL, 30, 30, 4);
+    PQueue_Dump(pPQueue);
+    
     pItem1 = pPQueue->head;
     pItem3 = pPQueue->head->v.next->h.next;
     
@@ -653,10 +702,12 @@ void PseudoTcpTest_01_01(void)
     PQueue_Pop(pPQueue);
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
     
-    // Case 4, PQueue content:
+    
+    // Case 6, PQueue content:
     //     item1
     //     item2  item3
     //     item4
+    // remove item 2 and item 3
     
     _Push_PQNode(pPQueue, 1, NULL, 10, 10, 1);
     _Push_PQNode(pPQueue, 2, NULL, 20, 20, 2);
@@ -664,7 +715,6 @@ void PseudoTcpTest_01_01(void)
     _Push_PQNode(pPQueue, 4, NULL, 30, 30, 4);
     PQueue_Dump(pPQueue);
     
-    // remove item 2
     pItem1 = pPQueue->head;
     pItem2 = pPQueue->head->v.next;
     pItem3 = pPQueue->head->v.next->h.next;
@@ -681,6 +731,70 @@ void PseudoTcpTest_01_01(void)
     PQueue_Pop(pPQueue);
     PQueue_Pop(pPQueue);
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    
+    // Case 7, PQueue content:
+    //     item1
+    //     item2
+    //     item3  item4
+    // remove item 1 and item 3
+    
+    _Push_PQNode(pPQueue, 1, NULL, 10, 10, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 20, 20, 2);
+    _Push_PQNode(pPQueue, 3, NULL, 30, 30, 3);
+    _Push_PQNode(pPQueue, 4, NULL, 30, 30, 4);
+    PQueue_Dump(pPQueue);
+    
+    pItem1 = pPQueue->head;
+    pItem2 = pPQueue->head->v.next;
+    pItem3 = pPQueue->head->v.next->v.next;
+    pItem4 = pPQueue->head->v.next->v.next->h.next;
+    
+    PQueue_Erase(pPQueue, pItem1);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem2);
+    CU_ASSERT_EQUAL(pPQueue->head->v.next, pItem3);
+    
+    PQueue_Erase(pPQueue, pItem3);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem2);
+    CU_ASSERT_EQUAL(pPQueue->head->v.next, pItem4);
+    
+    PQueue_Pop(pPQueue);
+    PQueue_Pop(pPQueue);
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+   
+    // Case 8, PQueue content:
+    //     item1 item2
+    
+    // remove item 1 and then insert item 3
+    //     item2 item3
+    
+    // remove item 3 and item 2
+    
+    CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
+    _Push_PQNode(pPQueue, 1, NULL, 10, 10, 1);
+    _Push_PQNode(pPQueue, 2, NULL, 10, 10, 2);
+    
+    pItem1 = pPQueue->head;;
+    pItem2 = pPQueue->head->h.next;
+    CU_ASSERT_EQUAL(pPQueue->head, pItem1);
+    CU_ASSERT_EQUAL(pPQueue->tail, pItem1);
+    
+    pPQNode = PQueue_Erase(pPQueue, pItem1);
+    CU_ASSERT_EQUAL(pPQNode, pItem2);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem2);
+    CU_ASSERT_EQUAL(pPQueue->tail, pItem2);
+    
+    _Push_PQNode(pPQueue, 3, NULL, 10, 10, 3);
+    pItem3 = pPQueue->head->h.next;
+    pPQNode = PQueue_Erase(pPQueue, pItem3);
+    CU_ASSERT_EQUAL(pPQNode, NULL);
+    CU_ASSERT_EQUAL(pPQueue->head, pItem2);
+    CU_ASSERT_EQUAL(pPQueue->tail, pItem2);
+    
+    pPQNode = PQueue_Erase(pPQueue, pItem2);
+    CU_ASSERT_EQUAL(NULL, pPQNode);
+    CU_ASSERT_EQUAL(NULL, pPQueue->head);
+    CU_ASSERT_EQUAL(NULL, pPQueue->tail);
+    
 #endif
     
     
@@ -727,8 +841,10 @@ void PseudoTcpTest_01_02(void)
    //TestTransfer_01(15000);
    
    TestTransfer_01(100000);
+   //sleep(3);
+   //TestTransfer_01(500000);
    //TestTransfer_01(1000000);
-   sleep(1);
+   //sleep(10);
    PseudoTcpTestBase_Destroy(pTest);
 #endif
 }

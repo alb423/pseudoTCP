@@ -5,7 +5,7 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>7E70C128-D6CB-4078-9C30-5F875242A741</string>
+	<string>C1CE0E5E-B9F9-4464-AC68-8976D9063601</string>
 	<key>IDESourceControlProjectName</key>
 	<string>pseudoTCP</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
@@ -14,11 +14,11 @@
 		<string>https://github.com/alb423/pseudoTCP.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>xcode/pseudoTCP/pseudoTCP.xcodeproj/project.xcworkspace</string>
+	<string>pseudoTCP.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>98CC013F-5F7C-46D7-8F65-8C069189025C</key>
-		<string>../../../..</string>
+		<string>../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://github.com/alb423/pseudoTCP.git</string>

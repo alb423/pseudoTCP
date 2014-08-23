@@ -926,7 +926,9 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
    if (pPTCP->m_bWriteEnable && (U32)(snd_buffered) < kIdealRefillSize) {
       pPTCP->m_bWriteEnable = false;
       //pPTCP->OnTcpWriteable(this);
-      pPTCP->OnTcpWriteable(pPTCP);
+      //if(pPTCP->OnTcpWriteable) {
+        pPTCP->OnTcpWriteable(pPTCP);
+      //}
       //notify(evWrite);
    }
 
@@ -1089,6 +1091,8 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now) {
       //LOG(LS_INFO, "while (true)");
       U32 seq = seg->seq;
       U8 flags = (seg->bCtrl ? FLAG_CTL : 0);
+      // TODO: seg->seq - pPTCP->m_snd_una may < 0, then cause error
+      //ASSERT(seg->seq >= pPTCP->m_snd_una);
       tWriteResult wres = PTCP_Packet( pPTCP, 
                                  seq,
                                  flags,
@@ -1243,11 +1247,17 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
             LOG(LS_INFO, "it->xmit > 0");
             //++it;
             //ASSERT(it != pPTCP->m_slist.end());
-            if(it->DLNode.next != NULL)
-            {
+            if(it->DLNode.next != NULL) {
                it = MI_NODEENTRY(it->DLNode.next, tRSSegment, DLNode);
             }
-            //ASSERT(it->DLNode.next != NULL);
+            else {
+                ASSERT(it->DLNode.next != NULL);
+                //printf("it->DLNode.next == NULL\n");
+                break;
+            }
+            // TODO: below will assert sometimes, but if we mark it, it may into infinite loop
+            //printf("it=0x%08x\n", (U32)it);
+            ASSERT(it != NULL);
          }
          //SList::iterator seg = it;
          tRSSegment *seg = it;
