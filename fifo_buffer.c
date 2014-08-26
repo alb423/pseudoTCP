@@ -785,9 +785,9 @@ tStreamResult WriteOffsetLocked(tFIFO_BUFFER *pFifo,
     //char* const p = (const char *)buffer;
     char* const p = (char *)buffer;
     memcpy(&pFifo->buffer[write_position], p, tail_copy);
-    if(copy > tail_copy) {
-        printf("copy > tail_copy (%zu,%zu)\n", copy, tail_copy);
-    }
+//    if(copy > tail_copy) {
+//        printf("copy > tail_copy (%zu,%zu)\n", copy, tail_copy);
+//    }
     memcpy(&pFifo->buffer[0], p + tail_copy, copy - tail_copy);
     
     if (bytes_written) {

@@ -139,8 +139,15 @@ tPseudoTcp        *_gpLocal;
 tPseudoTcp        *_gpRemote;
 tPseudoTcpForTestBase *_gpPTCPTest;
 
-tPseudoTcpForTestBase * init_PseudoTcpTestBase(tIPseudoTcpNotify* notify, U32 conv)
+tPseudoTcpForTestBase * init_PseudoTcpTestBase(U32 conv)
 {
+   tIPseudoTcpNotify *notify = malloc(sizeof(tIPseudoTcpNotify));
+   notify->OnTcpOpen       = (tOnTcpOpenCB)OnTcpOpen_01;
+   notify->OnTcpReadable   = (tOnTcpReadableCB)OnTcpReadable_01;
+   notify->OnTcpWriteable  = (tOnTcpWriteableCB)OnTcpWriteable_01;
+   notify->OnTcpClosed     = (tOnTcpClosedCB)OnTcpClosed_01;
+   notify->TcpWritePacket  = (tTcpWritePacketCB)TcpWritePacket_01;
+    
    tPseudoTcpForTestBase *pPTCPTest = malloc(sizeof(tPseudoTcpForTestBase));
    memset(pPTCPTest, 0, sizeof(tPseudoTcpForTestBase));
    
@@ -938,18 +945,13 @@ void PseudoTcpTest_01_01(void)
 #endif
 }
 
-void PseudoTcpTest_01_02(void)
+    
+#pragma mark - Basic end-to-end data transfer tests
+    
+// Test the normal case of sending data from one side to the other.
+void PseudoTcpTest_TestSend(void)
 {
-#if 1
-   tPseudoTcpForTestBase *pTest;
-   tIPseudoTcpNotify *notify = malloc(sizeof(tIPseudoTcpNotify));
-   notify->OnTcpOpen       = (tOnTcpOpenCB)OnTcpOpen_01;
-   notify->OnTcpReadable   = (tOnTcpReadableCB)OnTcpReadable_01;
-   notify->OnTcpWriteable  = (tOnTcpWriteableCB)OnTcpWriteable_01;
-   notify->OnTcpClosed     = (tOnTcpClosedCB)OnTcpClosed_01;
-   notify->TcpWritePacket  = (tTcpWritePacketCB)TcpWritePacket_01;
-   
-   pTest = init_PseudoTcpTestBase(notify, 0);
+   tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
    CU_ASSERT_PTR_NOT_NULL(pTest);
    
    SetLocalMtu(1500);
@@ -962,36 +964,374 @@ void PseudoTcpTest_01_02(void)
    TestTransfer_01(1000000);
 
    PseudoTcpTestBase_Destroy(pTest);
-#endif
 }
 
-
-
-// Test for PingPong
-void PseudoTcpTest_02(void) 
+// Test sending data with a 50 ms RTT. Transmission should take longer due
+// to a slower ramp-up in send rate.
+void PseudoTcpTest_TestSendWithDelay(void)
 {
-/*
-   tIPseudoTcpNotify *notify = malloc(sizeof(tIPseudoTcpNotify));
-   notify->OnTcpOpen       = OnTcpOpen_02;
-   notify->OnTcpReadable   = OnTcpReadable_02;
-   notify->OnTcpWriteable  = OnTcpWriteable_02;
-   notify->OnTcpClosed     = OnTcpClosed_02;
-   notify->TcpWritePacket  = TcpWritePacket_02;
-*/   
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetDelay(50);
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
 }
 
-// Test for ReceiveWindow
-void PseudoTcpTest_03(void) 
+// Test sending data with packet loss. Transmission should take much longer due
+// to send back-off when loss occurs.
+void PseudoTcpTest_TestSendWithLoss(void)
 {
-/*
-   tIPseudoTcpNotify *notify = malloc(sizeof(tIPseudoTcpNotify));
-   notify->OnTcpOpen       = OnTcpOpen_03;
-   notify->OnTcpReadable   = OnTcpReadable_03;
-   notify->OnTcpWriteable  = OnTcpWriteable_03;
-   notify->OnTcpClosed     = OnTcpClosed_03;
-   notify->TcpWritePacket  = TcpWritePacket_03;
-*/   
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetLoss(10);
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
 }
+    
+// Test sending data with a 50 ms RTT and 10% packet loss. Transmission should
+// take much longer due to send back-off and slower detection of loss.
+void PseudoTcpTest_TestSendWithDelayAndLoss(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetDelay(50);
+    SetLoss(10);
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+    
+    
+// Test sending data with 10% packet loss and Nagling disabled.  Transmission
+// should take about the same time as with Nagling enabled.
+void PseudoTcpTest_TestSendWithLossAndOptNaglingOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetLoss(10);
+    SetOptNagling(false);
+    TestTransfer_01(100000);  // less data so test runs faster
+    PseudoTcpTestBase_Destroy(pTest);
+}
+    
+// Test sending data with 10% packet loss and Delayed ACK disabled.
+// Transmission should be slightly faster than with it enabled.
+void PseudoTcpTest_TestSendWithLossAndOptAckDelayOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetLoss(10);
+    SetOptAckDelay(0);
+    TestTransfer_01(100000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending data with 50ms delay and Nagling disabled.
+void PseudoTcpTest_TestSendWithDelayAndOptNaglingOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetDelay(50);
+    SetOptNagling(false);
+    TestTransfer_01(100000);
+}
+
+// Test sending data with 50ms delay and Delayed ACK disabled.
+void PseudoTcpTest_TestSendWithDelayAndOptAckDelayOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetDelay(50);
+    SetOptAckDelay(0);
+    TestTransfer_01(100000);
+}
+
+// Test a large receive buffer with a sender that doesn't support scaling.
+void PseudoTcpTest_TestSendRemoteNoWindowScale(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetLocalOptRcvBuf(100000);
+    DisableRemoteWindowScale();
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test a large sender-side receive buffer with a receiver that doesn't support
+// scaling.
+void PseudoTcpTest_TestSendLocalNoWindowScale(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetRemoteOptRcvBuf(100000);
+    DisableLocalWindowScale();
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test when both sides use window scaling.
+void PseudoTcpTest_TestSendBothUseWindowScale(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetRemoteOptRcvBuf(100000);
+    SetLocalOptRcvBuf(100000);
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test using a large window scale value.
+void PseudoTcpTest_TestSendLargeInFlight(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetRemoteOptRcvBuf(100000);
+    SetLocalOptRcvBuf(100000);
+    SetOptSndBuf(150000);
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+void PseudoTcpTest_TestSendBothUseLargeWindowScale(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetRemoteOptRcvBuf(1000000);
+    SetLocalOptRcvBuf(1000000);
+    TestTransfer_01(10000000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test using a small receive buffer.
+void PseudoTcpTest_TestSendSmallReceiveBuffer(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetRemoteOptRcvBuf(10000);
+    SetLocalOptRcvBuf(10000);
+    TestTransfer_01(1000000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test using a very small receive buffer.
+void PseudoTcpTest_TestSendVerySmallReceiveBuffer(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetRemoteOptRcvBuf(100);
+    SetLocalOptRcvBuf(100);
+    TestTransfer_01(100000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+    
+#pragma mark - Ping-pong (request/response) tests
+
+// TODO:
+void SetBytesPerSend(int i) {;}
+void TestPingPong(int i, int j) {;}
+int EstimateSendWindowSize(void) { return 0;}
+int EstimateReceiveWindowSize(void) { return 0;}
+    
+// Test sending <= 1x MTU of data in each ping/pong.  Should take <10ms.
+void PseudoTcpTestPingPong_TestPingPong1xMtu(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    TestPingPong(100, 100);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending 2x-3x MTU of data in each ping/pong.  Should take <10ms.
+void PseudoTcpTestPingPong_TestPingPong3xMtu(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    TestPingPong(400, 100);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending 1x-2x MTU of data in each ping/pong.
+// Should take ~1s, due to interaction between Nagling and Delayed ACK.
+void PseudoTcpTestPingPong_TestPingPong2xMtu(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    TestPingPong(2000, 5);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending 1x-2x MTU of data in each ping/pong with Delayed ACK off.
+// Should take <10ms.
+void PseudoTcpTestPingPong_TestPingPong2xMtuWithAckDelayOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetOptAckDelay(0);
+    TestPingPong(2000, 100);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending 1x-2x MTU of data in each ping/pong with Nagling off.
+// Should take <10ms.
+void PseudoTcpTestPingPong_TestPingPong2xMtuWithNaglingOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetOptNagling(false);
+    TestPingPong(2000, 5);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending a ping as pair of short (non-full) segments.
+// Should take ~1s, due to Delayed ACK interaction with Nagling.
+void PseudoTcpTestPingPong_TestPingPongShortSegments(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetOptAckDelay(5000);
+    SetBytesPerSend(50); // i.e. two Send calls per payload
+    TestPingPong(100, 5);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending ping as a pair of short (non-full) segments, with Nagling off.
+// Should take <10ms.
+void PseudoTcpTestPingPong_TestPingPongShortSegmentsWithNaglingOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetOptNagling(false);
+    SetBytesPerSend(50); // i.e. two Send calls per payload
+    TestPingPong(100, 5);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test sending <= 1x MTU of data ping/pong, in two segments, no Delayed ACK.
+// Should take ~1s.
+void PseudoTcpTestPingPong_TestPingPongShortSegmentsWithAckDelayOff(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetBytesPerSend(50); // i.e. two Send calls per payload
+    SetOptAckDelay(0);
+    TestPingPong(100, 5);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+    
+#pragma mark - Test Receive Window
+    
+// Test that receive window expands and contract correctly.
+void PseudoTcpTestReceiveWindow_TestReceiveWindow(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetOptNagling(false);
+    SetOptAckDelay(0);
+    TestTransfer_01(1024 * 1000);
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test setting send window size to a very small value.
+void PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetOptNagling(false);
+    SetOptAckDelay(0);
+    SetOptSndBuf(900);
+    TestTransfer_01(1024 * 1000);
+    CU_ASSERT_EQUAL(900u, EstimateSendWindowSize());
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+// Test setting receive window size to a value other than default.
+void PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize(void)
+{
+    tPseudoTcpForTestBase *pTest = init_PseudoTcpTestBase(0);
+    CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SetLocalMtu(1500);
+    SetRemoteMtu(1500);
+    SetOptNagling(false);
+    SetOptAckDelay(0);
+    SetRemoteOptRcvBuf(100000);
+    SetLocalOptRcvBuf(100000);
+    TestTransfer_01(1024 * 1000);
+    CU_ASSERT_EQUAL(100000u, EstimateReceiveWindowSize());
+    PseudoTcpTestBase_Destroy(pTest);
+}
+
+
 
 /*****************************************************************************/
 
