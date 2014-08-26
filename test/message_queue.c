@@ -627,10 +627,10 @@ tMessageQueue * MQueue_Init(tOnMessageCB pCB) {
       // create a thread to handle message received (pass the msg to pOnMessageCB())
       pthread_mutex_init(&_mutex, NULL);
       pthread_cond_init(&_cond, NULL);
-      pthread_attr_t attr;
-      pthread_attr_init(&attr);         
-      pthread_create(&vpIn->thread, &attr, PreRun, vpIn);
-      pthread_attr_destroy(&attr);
+//      pthread_attr_t attr;
+//      pthread_attr_init(&attr);         
+//      pthread_create(&vpIn->thread, &attr, PreRun, vpIn);
+//      pthread_attr_destroy(&attr);
       
       return vpIn;      
    }
@@ -649,7 +649,7 @@ void MQueue_Destroy(tMessageQueue *vpIn) {
       pthread_cond_destroy(&_cond);
       
 //#if 1
-      pthread_exit(NULL);
+//      pthread_exit(NULL);
 //#else
 //      int vReturn;
 //      void *res;

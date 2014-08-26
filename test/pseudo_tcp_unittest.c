@@ -957,17 +957,10 @@ void PseudoTcpTest_01_02(void)
 
    // When size > 1443 (1500-PACKET_OVERHEAD), the data need demutiplex
    //TestTransfer_01(1024);
-   //TestTransfer_01(1443);
-#if 0
-    TestTransfer_01(1500);
-#else
-    TestTransfer_01(30000);
-#endif
-   //TestTransfer_01(15000);
-   
-   //TestTransfer_01(100000);
-   //TestTransfer_01(400000);
-   //TestTransfer_01(1000000);
+   //TestTransfer_01(1500);
+   //TestTransfer_01(30000);
+   TestTransfer_01(1000000);
+
    PseudoTcpTestBase_Destroy(pTest);
 #endif
 }
