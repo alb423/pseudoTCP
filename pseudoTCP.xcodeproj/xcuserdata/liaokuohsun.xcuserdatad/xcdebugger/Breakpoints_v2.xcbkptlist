@@ -9,13 +9,13 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "pseudo_tcp.c"
-            timestampString = "430489422.178713"
+            filePath = "test/message_queue.c"
+            timestampString = "430626229.673765"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1054"
-            endingLineNumber = "1054"
-            landmarkName = "PTCP_Process()"
+            startingLineNumber = "292"
+            endingLineNumber = "292"
+            landmarkName = "PQueue_Pop()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -25,29 +25,13 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "pseudo_tcp.c"
-            timestampString = "430489422.178713"
+            filePath = "test/message_queue.c"
+            timestampString = "430626232.817501"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1058"
-            endingLineNumber = "1058"
-            landmarkName = "PTCP_Process()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "pseudo_tcp.c"
-            timestampString = "430489422.178713"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1276"
-            endingLineNumber = "1276"
-            landmarkName = "attemptSend()"
+            startingLineNumber = "575"
+            endingLineNumber = "575"
+            landmarkName = "PQueue_Erase()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

@@ -210,11 +210,13 @@ U32 bound(U32 lower, U32 middle, U32 upper) {
 
 // TODO
 void NotifyReadCB(int vIn) {
+    //printf("NotifyReadCB\n");
    // Notify user can read data now;
    // if we didn't have any data to read before, and now we do, post an event
 }
 
 void NotifyWriteCB(int vIn) {
+    //bprintf("NotifyWriteCB\n");
    // Notify user can write data now;
    // if we(FIFO) were full before, and now we're not, post an event   
 }
@@ -234,10 +236,12 @@ tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv) {
    
    if(notify==NULL)
       return NULL;
-      
+    
    pPTCP = malloc(sizeof(tPseudoTcp));
+   if(!pPTCP)
+       return NULL;
    memset(pPTCP, 0, sizeof(tPseudoTcp));
-   
+    
    pPTCP->OnTcpOpen        = notify->OnTcpOpen;
    pPTCP->OnTcpReadable    = notify->OnTcpReadable;
    pPTCP->OnTcpWriteable   = notify->OnTcpWriteable;
@@ -246,11 +250,10 @@ tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv) {
    
    pPTCP->m_shutdown = SD_NONE;
    pPTCP->m_error = 0;
+    
    pPTCP->m_rbuf_len = DEFAULT_RCV_BUF_SIZE;
-   //pPTCP->m_rbuf = pPTCP->m_rbuf_len;
-   pPTCP->m_rbuf = FIFO_Create(pPTCP->m_rbuf_len, NotifyReadCB, NotifyWriteCB);
    pPTCP->m_sbuf_len = DEFAULT_SND_BUF_SIZE;
-   //pPTCP->m_sbuf = pPTCP->m_sbuf_len;
+   pPTCP->m_rbuf = FIFO_Create(pPTCP->m_rbuf_len, NotifyReadCB, NotifyWriteCB);
    pPTCP->m_sbuf = FIFO_Create(pPTCP->m_sbuf_len, NotifyReadCB, NotifyWriteCB);
    
    pPTCP->m_rlist = malloc(sizeof(tMI_DLIST));
@@ -260,7 +263,7 @@ tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv) {
    
    // Sanity check on buffer sizes (needed for OnTcpWriteable notification logic)
    ASSERT(pPTCP->m_rbuf_len + MIN_PACKET < pPTCP->m_sbuf_len);
-
+    
    U32 now = PTCP_Now();
 
    pPTCP->m_state = TCP_LISTEN;
@@ -303,7 +306,21 @@ tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv) {
 }
 
 void PTCP_Destroy(tPseudoTcp *pPTCP) {
-   ;
+    if(pPTCP) {
+        
+        FIFO_Destroy(pPTCP->m_rbuf);
+        FIFO_Destroy(pPTCP->m_sbuf);
+        
+        // TODO: if there are data in m_rlist or m_slist, we should remove them here
+        if(pPTCP->m_rlist) {
+            free(pPTCP->m_rlist);
+        }
+        if(pPTCP->m_slist) {
+            free(pPTCP->m_slist);
+        }
+        
+        free(pPTCP);
+    }
 }
 
 int PTCP_Connect(tPseudoTcp *pPTCP) {
@@ -371,8 +388,8 @@ void PTCP_NotifyClock(tPseudoTcp *pPTCP, U32 now) {
    if ((pPTCP->m_snd_wnd == 0)
       && (TimeDiff(pPTCP->m_lastsend + pPTCP->m_rx_rto, now) <= 0)) {
       if (TimeDiff(now, pPTCP->m_lastrecv) >= 15000) {
-      closedown(pPTCP, ECONNABORTED);
-      return;
+         closedown(pPTCP, ECONNABORTED);
+         return;
       }
 
       // probe the window
@@ -416,7 +433,6 @@ bool PTCP_NotifyPacket(tPseudoTcp *pPTCP, const U8* buffer, size_t len) {
 
 
 bool PTCP_GetNextClock(tPseudoTcp *pPTCP, U32 now, long *pTimeout) {
-   ASSERT(pPTCP!=NULL);
    return clock_check(pPTCP, now, pTimeout);
 }
 
@@ -468,8 +484,8 @@ U32 PTCP_GetBytesInFlight(tPseudoTcp *pPTCP) {
 
 
 U32 PTCP_GetBytesBufferedNotSent(tPseudoTcp *pPTCP) {
+   ASSERT(pPTCP!=NULL);
    size_t buffered_bytes = 0;
-   ASSERT(pPTCP!=NULL);   
    FIFO_GetBuffered(pPTCP->m_sbuf, &buffered_bytes);
    return (U32)(pPTCP->m_snd_una + buffered_bytes - pPTCP->m_snd_nxt);
 }
@@ -497,13 +513,23 @@ int PTCP_Recv(tPseudoTcp *pPTCP, U8* buffer, size_t len) {
    size_t read = 0;
    tStreamResult result = FIFO_Read(pPTCP->m_rbuf, buffer, len, &read);
 
-   // If there's no data in |pPTCP->m_rbuf|.
+    // If there's no data in |pPTCP->m_rbuf|.
    if (result == SR_BLOCK) {
       pPTCP->m_bReadEnable = true;
       pPTCP->m_error = EWOULDBLOCK;
       return SOCKET_ERROR;
    }
    ASSERT(result == SR_SUCCESS);
+    
+#ifdef CHECK_COPY_BUFFER
+    size_t i=0;
+    if(read > 24+4) {
+        i = read-1;
+        if(((char *)buffer)[i]==0x00) {
+            ASSERT(((char *)buffer)[i]!=0x00);
+        }
+    }
+#endif
 
    size_t available_space = 0;
    FIFO_GetWriteRemaining(pPTCP->m_rbuf, &available_space);
@@ -586,7 +612,8 @@ U32 PTCP_Queue(tPseudoTcp *pPTCP, const U8* data, U32 len, bool bCtrl) {
       SEGMENT_LIST_push_back(pPTCP->m_slist, &(pRSSeg->DLNode));
    }
    size_t written = 0;
-   FIFO_Write(pPTCP->m_sbuf, data, len, &written);
+   tStreamResult result = FIFO_Write(pPTCP->m_sbuf, data, len, &written);
+   ASSERT(result == SR_SUCCESS);
    return (U32)(written);
 }
 
@@ -726,7 +753,7 @@ bool clock_check(tPseudoTcp *pPTCP, U32 now, long  *pTimeout) {
 
 
 bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
-   LOG(LS_INFO, "PTCP_Process");
+   //LOG(LS_INFO, "PTCP_Process");
    ASSERT(pPTCP!=NULL); 
    char pTmp[1024]={0};
    // If this is the wrong conversation, send a reset!?! (with the correct conversation?)
@@ -775,7 +802,9 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
                LOG(LS_INFO, "State: TCP_SYN_SENT -> TCP_ESTABLISHED");
                adjustMTU(pPTCP);
                //pPTCP->OnTcpOpen(this);
-               pPTCP->OnTcpOpen(pPTCP);
+               if(pPTCP->OnTcpOpen) {
+                  pPTCP->OnTcpOpen(pPTCP);
+               }
                //notify(evOpen);
          }
       } else {
@@ -846,6 +875,9 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
                SEGMENT_LIST_pop_front(pPTCP->m_slist);
             }
          }
+         else {
+             break;
+         }
       }
 
       if (pPTCP->m_dup_acks >= 3) {
@@ -911,8 +943,9 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
       pPTCP->m_state = TCP_ESTABLISHED;
       LOG(LS_INFO, "State: TCP_SYN_RECEIVED -> TCP_ESTABLISHED");
       adjustMTU(pPTCP);
-      //pPTCP->OnTcpOpen(this);
-      pPTCP->OnTcpOpen(pPTCP);
+      if(pPTCP->OnTcpOpen) {
+         pPTCP->OnTcpOpen(pPTCP);
+      }
       //notify(evOpen);
    }
 
@@ -925,10 +958,9 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
    FIFO_GetBuffered(pPTCP->m_sbuf, &snd_buffered);
    if (pPTCP->m_bWriteEnable && (U32)(snd_buffered) < kIdealRefillSize) {
       pPTCP->m_bWriteEnable = false;
-      //pPTCP->OnTcpWriteable(this);
-      //if(pPTCP->OnTcpWriteable) {
-        pPTCP->OnTcpWriteable(pPTCP);
-      //}
+      if(pPTCP->OnTcpWriteable) {
+         pPTCP->OnTcpWriteable(pPTCP);
+      }
       //notify(evWrite);
    }
 
@@ -992,10 +1024,15 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
             pPTCP->m_rcv_nxt += pSeg->len;
          }
       } else {
+         size_t bytesWritten;
          U32 nOffset = pSeg->seq - pPTCP->m_rcv_nxt;
-                           
-         tStreamResult result = FIFO_WriteOffset(pPTCP->m_rbuf, pSeg->data, pSeg->len, nOffset, NULL);
+          if(pSeg->seq < pPTCP->m_rcv_nxt) {
+              printf("(pSeg->seq, pPTCP->m_rcv_nxt) = (%u,%u)\n", pSeg->seq, pPTCP->m_rcv_nxt);
+              ASSERT(pSeg->seq >= pPTCP->m_rcv_nxt);
+          }
+         tStreamResult result = FIFO_WriteOffset(pPTCP->m_rbuf, pSeg->data, pSeg->len, nOffset, &bytesWritten);
          ASSERT(result == SR_SUCCESS);
+         ASSERT(pSeg->len == bytesWritten);
          UNUSED(result);
 
          if (pSeg->seq == pPTCP->m_rcv_nxt) {
@@ -1021,6 +1058,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
                   pPTCP->m_rcv_nxt += nAdjust;
                   pPTCP->m_rcv_wnd -= nAdjust;
                }
+                
                //it = pPTCP->m_rlist.erase(it);
                tMI_DLNODE *vpNode = SEGMENT_LIST_erase(pPTCP->m_rlist, &it->DLNode);
                if(vpNode==NULL)
@@ -1061,14 +1099,15 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
       }
    }
 
-   LOG(LS_INFO, "process done!!");
+   //LOG(LS_INFO, "process done!!");
    attemptSend(pPTCP, sflags);
 
    // If we have new data, notify the user
    if (bNewData && pPTCP->m_bReadEnable) {
       pPTCP->m_bReadEnable = false;
-      //pPTCP->OnTcpReadable(this);
-      pPTCP->OnTcpReadable(pPTCP);      
+      if(pPTCP->OnTcpReadable){
+         pPTCP->OnTcpReadable(pPTCP);
+      }
       //notify(evRead);
    }
 
@@ -1244,7 +1283,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags) {
       if(it)
       {
          while (it->xmit > 0) {
-            LOG(LS_INFO, "it->xmit > 0");
+            //LOG(LS_INFO, "it->xmit > 0");
             //++it;
             //ASSERT(it != pPTCP->m_slist.end());
             if(it->DLNode.next != NULL) {
@@ -1298,8 +1337,9 @@ void closedown(tPseudoTcp *pPTCP, U32 err) {
    LOG(LS_INFO, "State: TCP_CLOSED");
    ASSERT(pPTCP!=NULL); 
    pPTCP->m_state = TCP_CLOSED;
-   //pPTCP->OnTcpClosed(this, err);
-   pPTCP->OnTcpClosed(pPTCP, err);
+   if(pPTCP->OnTcpClosed) {
+      pPTCP->OnTcpClosed(pPTCP, err);
+   }
   //notify(evClose, err);
 }
 
@@ -1307,7 +1347,7 @@ void closedown(tPseudoTcp *pPTCP, U32 err) {
 void adjustMTU(tPseudoTcp *pPTCP) {
    ASSERT(pPTCP!=NULL); 
    // Determine our current mss level, so that we can adjust appropriately later
-   for (pPTCP->m_msslevel = 0; PACKET_MAXIMUMS[pPTCP->m_msslevel + 1] > 0; ++pPTCP->m_msslevel) {
+   for (pPTCP->m_msslevel = 0; PACKET_MAXIMUMS[pPTCP->m_msslevel + 1] > 0; ++(pPTCP->m_msslevel)) {
       if ((U16)(PACKET_MAXIMUMS[pPTCP->m_msslevel]) <= pPTCP->m_mtu_advise) {
          break;
       }
@@ -1326,7 +1366,6 @@ void adjustMTU(tPseudoTcp *pPTCP) {
 
 
 bool isReceiveBufferFull(tPseudoTcp *pPTCP) {
-   ASSERT(pPTCP!=NULL); 
    size_t available_space = 0;
    FIFO_GetWriteRemaining(pPTCP->m_rbuf, &available_space);
    return !available_space;
@@ -1342,6 +1381,7 @@ void PTCP_DisableWindowScale(tPseudoTcp *pPTCP) {
 void queueConnectMessage(tPseudoTcp *pPTCP) {
    ASSERT(pPTCP!=NULL); 
    //talk_base::ByteBuffer buf(talk_base::ByteBuffer::ORDER_NETWORK);
+   // big-endian
    U32 i = 0;
    U8 buf[100]={0};
    buf[i++] = CTL_CONNECT;  
@@ -1374,7 +1414,8 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len) {
    memcpy(buf, data, len);
    vLength = len;
    
-   // TODO: remove medump 
+   // TODO: remove medump
+   /*
    {
       if(vLength==1)
          printf("Options: %02x\n", buf[0]);
@@ -1384,7 +1425,7 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len) {
          printf("Options: %02x %02x %02x\n", buf[0], buf[1], buf[2]);
        
    }
-   
+   */
    while (vLength) {
       U8 kind = TCP_OPT_EOL;
       kind = (U8) buf[vIndex++];

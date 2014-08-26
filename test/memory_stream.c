@@ -68,7 +68,6 @@ extern tMemoryStream * MS_Init(const void* pData, size_t length) {
 
       pStream->buffer_alloc_ = malloc(length + kAlignment);
       memset(pStream->buffer_alloc_, 0, length + kAlignment);
-      //pStream->buffer_ = (char *)(ALIGNP(pStream->buffer_alloc_, kAlignment));
       pStream->buffer_ = (char *)(ALIGNP(pStream->buffer_alloc_, kAlignment));
       if(pData)
       {

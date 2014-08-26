@@ -339,7 +339,7 @@ void FifoBufferTest_WriteOffsetAndReadOffset(void)
    CU_ASSERT_EQUAL(16u, buffered);
 
    // Read at offset 16, this should fail since we don't have that much data.
-   CU_ASSERT_EQUAL(SR_BLOCK, FIFO_ReadOffset(pFifo, out, 10, 16, NULL));
+   CU_ASSERT_EQUAL(SR_BLOCK, FIFO_ReadOffset(pFifo, out, 10, 16, &buffered));
 }
 
 /*** Test for List *********************************************/

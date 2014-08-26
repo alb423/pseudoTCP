@@ -32,7 +32,7 @@ extern "C" {
 
 /*** PROJECT INCLUDES ********************************************************/
 #include "fifo_buffer.h"
-
+#include "pseudo_tcp_porting.h"
 /*** MACROS ******************************************************************/
 
 
@@ -81,23 +81,26 @@ tStreamResult WriteOffsetLocked(tFIFO_BUFFER *pFifo,
 ///   None.<br>
 ///
 ///////////////////////////////////////////////////////////////////////////////
-tFIFO_BUFFER * FIFO_Create(size_t length, tFIFO_CB pReadCB, tFIFO_CB pWriteCB)
+tFIFO_BUFFER * FIFO_Create(size_t vSize, tFIFO_CB pReadCB, tFIFO_CB pWriteCB)
 {
    // TODO: implement a lock mechanism to lock related operation
    tFIFO_BUFFER *vpPtr;
-   if(length)
+   if(vSize)
    {
-      vpPtr = calloc(sizeof(tFIFO_BUFFER), sizeof(U8));
+      vpPtr = malloc(sizeof(tFIFO_BUFFER));
+      //vpPtr = calloc(sizeof(tFIFO_BUFFER), sizeof(U8));
       if(vpPtr)
       {
-         vpPtr->buffer = malloc(length);
+         memset(vpPtr, 0, sizeof(tFIFO_BUFFER));
+         vpPtr->buffer = malloc(vSize);
          if(!vpPtr->buffer)
          {
             free(vpPtr);
             return NULL;
          }
-         
-         vpPtr->buffer_length = length; 
+         memset(vpPtr->buffer, 0, vSize);
+          
+         vpPtr->buffer_length = vSize;
          vpPtr->state = SS_OPEN;
          vpPtr->data_length = 0;
          vpPtr->read_position = 0;
@@ -110,7 +113,13 @@ tFIFO_BUFFER * FIFO_Create(size_t length, tFIFO_CB pReadCB, tFIFO_CB pWriteCB)
 //         pthread_mutex_init(&vpPtr->mutex, &mutex_attribute);
 //         pthread_mutexattr_destroy(&mutex_attribute);
           
-         pthread_mutex_init(&vpPtr->mutex, NULL);
+         pthread_mutexattr_t mutex_attribute;
+         pthread_mutexattr_init(&mutex_attribute);
+         pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_ERRORCHECK);
+         pthread_mutex_init(&vpPtr->mutex, &mutex_attribute);
+         pthread_mutexattr_destroy(&mutex_attribute);
+          
+//          pthread_mutex_init(&vpPtr->mutex, NULL);
       }
       return vpPtr;
    }
@@ -171,10 +180,12 @@ void FIFO_Destroy(tFIFO_BUFFER *pFifo)
 ///////////////////////////////////////////////////////////////////////////////
 bool FIFO_GetBuffered(tFIFO_BUFFER *pFifo, size_t* size)
 {
-  //CritScope cs(&crit_);  
-   if(!pFifo)
-      return false;  
-      
+  //CritScope cs(&crit_);
+
+   if(!pFifo) {
+      return false;
+   }
+
    pthread_mutex_lock(&pFifo->mutex);
    *size = pFifo->data_length;
    pthread_mutex_unlock(&pFifo->mutex);
@@ -231,13 +242,16 @@ tStreamState FIFO_GetState(tFIFO_BUFFER *pFifo)
 bool FIFO_SetCapacity(tFIFO_BUFFER *pFifo, size_t size)
 {
    // CritScope cs(&crit_);
-   if(!pFifo)
+
+   if(!pFifo) {
       return false;
+   }
 
    pthread_mutex_lock(&pFifo->mutex);
-   if (pFifo->data_length > size) 
+   if (pFifo->data_length > size)
    {
-      // don't need change 
+      // don't need change
+      pthread_mutex_unlock(&pFifo->mutex);
       return false;
    }
 
@@ -250,80 +264,17 @@ bool FIFO_SetCapacity(tFIFO_BUFFER *pFifo, size_t size)
       memcpy(vpBuffer + tail_copy, &pFifo->buffer[0], copy - tail_copy);
       
       //pFifo->buffer.reset(buffer);
-      pFifo->read_position = 0;
       pFifo->buffer_length = size;
-      pFifo->data_length = copy;
-      pFifo->state = SS_OPEN;
       if(pFifo->buffer)
          free(pFifo->buffer);
       pFifo->buffer = vpBuffer;
+       
+      pFifo->read_position = 0;
+      pFifo->buffer_length = size;
    }
    pthread_mutex_unlock(&pFifo->mutex);   
    
    return true;
-}
-
-
-tStreamResult ReadOffsetLocked(tFIFO_BUFFER *pFifo,
-                              void* buffer,
-                              size_t bytes,
-                              size_t offset,
-                              size_t* bytes_read) 
-{
-   if(!pFifo)
-      return SR_ERROR;
-      
-   if (offset >= pFifo->data_length) {
-      return (pFifo->state != SS_CLOSED) ? SR_BLOCK : SR_EOS;
-   }
-
-   const size_t available = pFifo->data_length - offset;
-   const size_t read_position = (pFifo->read_position + offset) % pFifo->buffer_length;
-   const size_t copy = MIN(bytes, available);
-   const size_t tail_copy = MIN(copy, pFifo->buffer_length - read_position);
-   //char* const p = static_cast<char*>(buffer);
-   char* const p = (char *)buffer;
-   memcpy(p, &pFifo->buffer[read_position], tail_copy);
-   memcpy(p + tail_copy, &pFifo->buffer[0], copy - tail_copy);
-
-   if (bytes_read) {
-      *bytes_read = copy;
-   }
-   return SR_SUCCESS;
-}
-
-tStreamResult WriteOffsetLocked(tFIFO_BUFFER *pFifo,
-                               const void* buffer,
-                               size_t bytes,
-                               size_t offset,
-                               size_t* bytes_written) 
-{
-   if(!pFifo)
-      return SR_ERROR;
-      
-   if (pFifo->state == SS_CLOSED) {
-      return SR_EOS;
-   }
-
-   if (pFifo->data_length + offset >= pFifo->buffer_length) {
-      return SR_BLOCK;
-   }
-
-   const size_t available = pFifo->buffer_length - pFifo->data_length - offset;
-   const size_t write_position = (pFifo->read_position + pFifo->data_length + offset)
-   % pFifo->buffer_length;
-   const size_t copy = MIN(bytes, available);
-   const size_t tail_copy = MIN(copy, pFifo->buffer_length - write_position);
-   //const char* const p = static_cast<const char*>(buffer);
-   //char* const p = (const char *)buffer;
-   char* const p = (char *)buffer;
-   memcpy(&pFifo->buffer[write_position], p, tail_copy);
-   memcpy(&pFifo->buffer[0], p + tail_copy, copy - tail_copy);
-
-   if (bytes_written) {
-      *bytes_written = copy;
-   }
-   return SR_SUCCESS;
 }
 
 
@@ -366,12 +317,26 @@ tStreamResult FIFO_ReadOffset(tFIFO_BUFFER *pFifo,
                         size_t* bytes_read) 
 {
    // CritScope cs(&crit_);
+
    tStreamResult vResult;
-   if(!pFifo)
+   if(!pFifo) {
       return SR_ERROR;
-      
+   }
+   
    pthread_mutex_lock(&pFifo->mutex);
    vResult = ReadOffsetLocked(pFifo, buffer, bytes, offset, bytes_read);
+    
+#ifdef CHECK_COPY_BUFFER
+    size_t i=0;
+    if(bytes_read) {
+        if(*bytes_read > 24+4) {
+            i = *bytes_read-1;
+            if(((char *)buffer)[i]==0x00) {
+                ASSERT(((char *)buffer)[i]!=0x00);
+            }
+        }
+    }
+#endif
    pthread_mutex_unlock(&pFifo->mutex);
    
    return vResult;
@@ -417,11 +382,23 @@ tStreamResult FIFO_WriteOffset(tFIFO_BUFFER *pFifo,
                         size_t* bytes_written) 
 {
    // CritScope cs(&crit_);
+
    tStreamResult vResult;   
-   if(!pFifo)
+   if(!pFifo) {
       return SR_ERROR;
-      
+   }
+   
    pthread_mutex_lock(&pFifo->mutex);
+#ifdef CHECK_COPY_BUFFER
+    size_t i=0;
+    if(bytes > 24+4) {
+        i = bytes-1;
+        if(((char *)buffer)[i]==0x00) {
+            ASSERT(((char *)buffer)[i]!=0x00);
+        }
+    }
+#endif
+    
    vResult = WriteOffsetLocked(pFifo, buffer, bytes, offset, bytes_written);
    pthread_mutex_unlock(&pFifo->mutex);   
    
@@ -464,17 +441,37 @@ tStreamResult FIFO_Read(tFIFO_BUFFER *pFifo,
                   size_t* bytes_read)
 {
    //CritScope cs(&crit_);
+
+    
    bool was_writable = false;
-   size_t copy = 0;
-   tStreamResult result = ReadOffsetLocked(pFifo, buffer, bytes, 0, &copy);
+    size_t copy = 0;
    
-   if(!pFifo)
+   tStreamResult result;
+   if(!pFifo) {
       return SR_ERROR;
-      
+   }
+    
    pthread_mutex_lock(&pFifo->mutex);
    was_writable = pFifo->data_length < pFifo->buffer_length;
+    
    result = ReadOffsetLocked(pFifo, buffer, bytes, 0, &copy);
-      
+   if(result != SR_SUCCESS) {
+       pthread_mutex_unlock(&pFifo->mutex);
+       return result;
+   }
+    
+    
+#ifdef CHECK_COPY_BUFFER
+    size_t i=0;
+    if(copy > 24+4) {
+        i = copy-1;
+        if(((char *)buffer)[i]==0x00) {
+            ASSERT(((char *)buffer)[i]!=0x00);
+        }
+    }
+#endif
+    
+    
    if (result == SR_SUCCESS) {
       // If read was successful then adjust the read position and number of
       // bytes buffered.
@@ -533,18 +530,36 @@ tStreamResult FIFO_Write(tFIFO_BUFFER *pFifo,
                   size_t* bytes_written)
 {
    //CritScope cs(&crit_);
+
    bool was_readable = false;
    size_t copy = 0;
    tStreamResult result = SR_SUCCESS;
    
-   if(!pFifo)
+   if(!pFifo) {
       return SR_ERROR;
-      
+   }
+    
    pthread_mutex_lock(&pFifo->mutex);
+#ifdef CHECK_COPY_BUFFER
+    int i=0;
+    // omit the control packet
+    for (i = 3; i < bytes-3; ++i) {
+        if(((char *)buffer)[i]==0x00) {
+            ASSERT(((char *)buffer)[i]!=0x00);
+        }
+    }
+#endif
+    
    was_readable = (pFifo->data_length > 0);
    result = WriteOffsetLocked(pFifo, buffer, bytes, 0, &copy);
 
    if (result == SR_SUCCESS) {
+#ifdef CHECK_COPY_BUFFER
+       size_t vTmp = MIN(bytes, pFifo->buffer_length);
+       if(copy!=vTmp) {
+           ASSERT(copy==vTmp);
+       }
+#endif
       // If write was successful then adjust the number of readable bytes.
       pFifo->data_length += copy;
       if (bytes_written) 
@@ -560,6 +575,9 @@ tStreamResult FIFO_Write(tFIFO_BUFFER *pFifo,
             pFifo->pNotifyReadCB(0);
       }
    }
+   else{
+       ASSERT(result == SR_SUCCESS);
+   }
    pthread_mutex_unlock(&pFifo->mutex);   
    
    return result;
@@ -568,21 +586,24 @@ tStreamResult FIFO_Write(tFIFO_BUFFER *pFifo,
 void FIFO_Close(tFIFO_BUFFER *pFifo)
 {
    //CritScope cs(&crit_);
+   pthread_mutex_lock(&pFifo->mutex);
    if(pFifo)
    {
-      pthread_mutex_lock(&pFifo->mutex);
       pFifo->state = SS_CLOSED;
-      pthread_mutex_unlock(&pFifo->mutex);    
    }
+   pthread_mutex_unlock(&pFifo->mutex);
 }
 
 const void* FIFO_GetReadData(tFIFO_BUFFER *pFifo, size_t* size)
 {
    //CritScope cs(&crit_);
+
+    
    U8 *vpPtr = NULL;
-   if(!pFifo)
-      return NULL;   
-      
+   if(!pFifo) {
+       return NULL;
+   }
+    
    pthread_mutex_lock(&pFifo->mutex);
    *size = (pFifo->read_position + pFifo->data_length <= pFifo->buffer_length) ?
    pFifo->data_length : pFifo->buffer_length - pFifo->read_position;
@@ -595,17 +616,21 @@ const void* FIFO_GetReadData(tFIFO_BUFFER *pFifo, size_t* size)
 
 void FIFO_ConsumeReadData(tFIFO_BUFFER *pFifo, size_t size)
 {
+
+    
    bool was_writable = false;
    
    //CritScope cs(&crit_);
-   if(!pFifo)
-      return;   
+   if(!pFifo) {
+      return;
+   }
       
-   pthread_mutex_lock(&pFifo->mutex);      
+   pthread_mutex_lock(&pFifo->mutex);
    //ASSERT(size <= data_length_);
    if(size > pFifo->data_length)
    {
       // TODO: error control
+      pthread_mutex_unlock(&pFifo->mutex);
       return;
    }
    
@@ -625,12 +650,15 @@ void FIFO_ConsumeReadData(tFIFO_BUFFER *pFifo, size_t size)
 void* FIFO_GetWriteBuffer(tFIFO_BUFFER *pFifo, size_t* size)
 {
    //CritScope cs(&crit_);
-   if(!pFifo)
-      return NULL;   
-      
-   pthread_mutex_lock(&pFifo->mutex);      
-   if (pFifo->state == SS_CLOSED) 
-   {
+
+    
+   if(!pFifo) {
+     return NULL;
+   }
+    
+   pthread_mutex_lock(&pFifo->mutex);
+   if (pFifo->state == SS_CLOSED) {
+      pthread_mutex_unlock(&pFifo->mutex);
       return NULL;
    }
 
@@ -644,8 +672,16 @@ void* FIFO_GetWriteBuffer(tFIFO_BUFFER *pFifo, size_t* size)
    U8 *vpPtr = NULL;
    const size_t write_position = (pFifo->read_position + pFifo->data_length)
    % pFifo->buffer_length;
+    
+   // The caculation of size may incorrect, but since we don't use this function
+   // so fix it in the future
    *size = (write_position > pFifo->read_position || pFifo->data_length == 0) ?
    pFifo->buffer_length - write_position : pFifo->read_position - write_position;
+    
+//    *size = (write_position > pFifo->read_position || pFifo->data_length == 0) ?
+//    pFifo->buffer_length - write_position + pFifo->read_position : pFifo->read_position - write_position;
+//
+    
    vpPtr = &pFifo->buffer[write_position];
    pthread_mutex_unlock(&pFifo->mutex);   
    
@@ -654,18 +690,15 @@ void* FIFO_GetWriteBuffer(tFIFO_BUFFER *pFifo, size_t* size)
 
 void FIFO_ConsumeWriteBuffer(tFIFO_BUFFER *pFifo, size_t size)
 {
+
    bool was_readable = false;
    //CritScope cs(&crit_);
-   if(!pFifo)
-      return;
-      
-   pthread_mutex_lock(&pFifo->mutex);      
-   //ASSERT(size <= buffer_length_ - data_length_);
-   if(size > pFifo->buffer_length - pFifo->data_length)
-   {
-      // TODO: error control
+   if(!pFifo) {
       return;
    }
+    
+   pthread_mutex_lock(&pFifo->mutex);
+   ASSERT(size <= pFifo->buffer_length - pFifo->data_length);
    
    was_readable = (pFifo->data_length > 0);
    pFifo->data_length += size;
@@ -682,15 +715,88 @@ void FIFO_ConsumeWriteBuffer(tFIFO_BUFFER *pFifo, size_t size)
 bool FIFO_GetWriteRemaining(tFIFO_BUFFER *pFifo, size_t* size)
 {
    //CritScope cs(&crit_);
-   if(!pFifo)
+
+    
+    if(!pFifo) {
       return false;
-      
-   pthread_mutex_lock(&pFifo->mutex);      
+    }
+    
+   pthread_mutex_lock(&pFifo->mutex);
    *size = pFifo->buffer_length - pFifo->data_length;
    pthread_mutex_unlock(&pFifo->mutex);
    
    return true;
 }
+    
+    
+tStreamResult ReadOffsetLocked(tFIFO_BUFFER *pFifo,
+                               void* buffer,
+                               size_t bytes,
+                               size_t offset,
+                               size_t* bytes_read)
+{
+    if(!pFifo)
+        return SR_ERROR;
+    
+    if (offset >= pFifo->data_length) {
+        return (pFifo->state != SS_CLOSED) ? SR_BLOCK : SR_EOS;
+    }
+    
+    const size_t available = pFifo->data_length - offset;
+    const size_t read_position = (pFifo->read_position + offset) % pFifo->buffer_length;
+    const size_t copy = MIN(bytes, available);
+    const size_t tail_copy = MIN(copy, pFifo->buffer_length - read_position);
+    //const size_t tail_copy = MIN(copy, pFifo->data_length - read_position);
+    
+    //char* const p = static_cast<char*>(buffer);
+    char* const p = (char *)buffer;
+    memcpy(p, &pFifo->buffer[read_position], tail_copy);
+    memcpy(p + tail_copy, &pFifo->buffer[0], copy - tail_copy);
+    
+    if (bytes_read) {
+        *bytes_read = copy;
+    }
+    return SR_SUCCESS;
+}
+
+tStreamResult WriteOffsetLocked(tFIFO_BUFFER *pFifo,
+                                const void* buffer,
+                                size_t bytes,
+                                size_t offset,
+                                size_t* bytes_written)
+{
+    if(!pFifo)
+        return SR_ERROR;
+    
+    if (pFifo->state == SS_CLOSED) {
+        return SR_EOS;
+    }
+    
+    if (pFifo->data_length + offset >= pFifo->buffer_length) {
+        return SR_BLOCK;
+    }
+    
+    const size_t available = pFifo->buffer_length - pFifo->data_length - offset;
+    const size_t write_position = (pFifo->read_position + pFifo->data_length + offset)
+    % pFifo->buffer_length;
+    const size_t copy = MIN(bytes, available);
+    const size_t tail_copy = MIN(copy, pFifo->buffer_length - write_position);
+    //const char* const p = static_cast<const char*>(buffer);
+    //char* const p = (const char *)buffer;
+    char* const p = (char *)buffer;
+    memcpy(&pFifo->buffer[write_position], p, tail_copy);
+    if(copy > tail_copy) {
+        printf("copy > tail_copy (%zu,%zu)\n", copy, tail_copy);
+    }
+    memcpy(&pFifo->buffer[0], p + tail_copy, copy - tail_copy);
+    
+    if (bytes_written) {
+        *bytes_written = copy;
+    }
+    return SR_SUCCESS;
+}
+
+    
 /*****************************************************************************/
 
 #ifdef __cplusplus

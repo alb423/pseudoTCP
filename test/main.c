@@ -87,7 +87,12 @@ int main(int argc, char **argv)
    CU_add_test(pSuite, "MemoryStreamTest_TestTransfer", MemoryStreamTest_TestTransfer);
 
 #else
-   // TODO     
+   // TODO
+//    pSuite = CU_add_suite("Test FIFO", testInit, testClean);
+//    CU_add_test(pSuite, "FifoBufferTest_FullBufferCheck", FifoBufferTest_FullBufferCheck);
+//    CU_add_test(pSuite, "FifoBufferTest_WriteOffsetAndReadOffset", FifoBufferTest_WriteOffsetAndReadOffset);
+//    CU_add_test(pSuite, "FifoBufferTest_All", FifoBufferTest_All);
+    
    pSuite = CU_add_suite("Test PseudoTCP", testInit, testClean);
    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_01_01);
    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_01_02);

@@ -223,13 +223,16 @@ tMI_DLNODE *MList_Erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 //  its first element is always the greatest of the elements it container
 // Returns a reference to the first element in the list container.
 
-    
+#if 1
+void PQueue_Dump(tMI_PQUEUE *pQ) {;}
+#else
 void PQueue_Dump(tMI_PQUEUE *pQ) {
 
     tMI_PQNODE *vpTest = pQ->head;
     tMI_PQNODE *vpVNode = pQ->head;
-    if(pQ->head)
+    if(pQ->head) {
         printf("Dump PQueue (pQ->head->v.next=0x%08x) (pQ->tail->v.previous=0x%08x)\n", (U32)pQ->head->v.next, (U32)pQ->tail->v.previous);
+    }
     while(vpTest) {
         printf(" 0x%08x ", (U32)vpTest);
         if(vpTest->h.next!=0) {
@@ -243,6 +246,7 @@ void PQueue_Dump(tMI_PQUEUE *pQ) {
     }
     printf("\n");
 }
+#endif
     
 // sort by cmsDelay time
 static S32 _priority(const tMI_PQNODE *pNode)
@@ -284,8 +288,8 @@ tDelayMessage * PQueue_Pop(tMI_PQUEUE *pQ)
 {
    tMI_PQNODE *pPQNode;
    pPQNode = MI_PQPopHead(pQ);
-   printf("PQueue_Pop() head=0x%08x tail=0x%08x node:0x%08x count=%d\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode, (U32)pQ->count);
-    PQueue_Dump(pQ);
+   //printf("PQueue_Pop() head=0x%08x tail=0x%08x node:0x%08x count=%d\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode, (U32)pQ->count);
+   PQueue_Dump(pQ);
    if(pPQNode)
    {
       tDelayMessage *vpTxt;
@@ -299,7 +303,7 @@ tDelayMessage * PQueue_Pop(tMI_PQUEUE *pQ)
 void PQueue_Push(tMI_PQUEUE *pQ, tMI_PQNODE *pPQNode)
 {
    MI_PQPushTail(pQ, pPQNode);
-   printf("PQueue_Push() head=0x%08x tail=0x%08x node:0x%08x count=%d\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode, (U32)pQ->count);
+   //printf("PQueue_Push() head=0x%08x tail=0x%08x node:0x%08x count=%d\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode, (U32)pQ->count);
    PQueue_Dump(pQ);
 }
 
@@ -308,7 +312,7 @@ tDelayMessage *PQueue_Top(tMI_PQUEUE *pQ)
    if(pQ)
    {
       tMI_PQNODE *pPQNode = pQ->head;
-      printf("PQueue_Top() head=0x%08x tail=0x%08x node:0x%08x\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode);
+      //printf("PQueue_Top() head=0x%08x tail=0x%08x node:0x%08x\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode);
       if(pPQNode)
       {
          tDelayMessage *vpTxt;
@@ -321,7 +325,7 @@ tDelayMessage *PQueue_Top(tMI_PQUEUE *pQ)
 
 tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode) 
 {
-   printf("PQueue_Erase() count=%d head=0x%08x tail=0x%08x remove=0x%08x\n", pQ->count, (U32)pQ->head, (U32)pQ->tail, (U32)pNode);
+   //printf("PQueue_Erase() count=%d head=0x%08x tail=0x%08x remove=0x%08x\n", pQ->count, (U32)pQ->head, (U32)pQ->tail, (U32)pNode);
    if (pQ && pNode) {
       if (pQ->head == 0) {
          return NULL;
@@ -383,7 +387,7 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                         }
                     }
                     else {
-                        printf("vpN->h.previous != 0\n");
+                        //printf("vpN->h.previous != 0\n");
                         
                         if (vpN->v.previous != 0) {
                            vpN->v.previous->v.next = vpN->h.next;
@@ -405,7 +409,7 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
                         }
                         else {
                           // The node is head, should be handle in above case
-                          ASSERT(1!=1);
+                          ASSERT(false);
                         }
                     }
                 }
@@ -566,7 +570,7 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
 #endif
                 
                pQ->count--;
-               printf("PQueue_Erase() after erase, count=%d head=0x%08x tail=0x%08x\n", pQ->count, (U32)pQ->head, (U32)pQ->tail);
+               //printf("PQueue_Erase() after erase, count=%d head=0x%08x tail=0x%08x\n", pQ->count, (U32)pQ->head, (U32)pQ->tail);
                
                PQueue_Dump(pQ);
                 
@@ -634,13 +638,13 @@ tMessageQueue * MQueue_Init(tOnMessageCB pCB) {
 }
 
 void MQueue_Destroy(tMessageQueue *vpIn) {
-   // TODO: send signal the MQueue thread to destroy MQueue
+   // TODO: send signal to the MQueue thread to destroy MQueue
    
    if(vpIn)
    {
       //MList_Init(&vpIn->msgq);
       //PQueue_Init(&vpIn->dmsgq);
-      
+      MQueue_Quit(vpIn);
       pthread_mutex_destroy(&_mutex);
       pthread_cond_destroy(&_cond);
       
@@ -663,7 +667,7 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed) {
    //CritScope cs(&crit_);
    //LOG(LS_INFO, "pthread_mutex_lock _mutex");
    pthread_mutex_lock(&_mutex);
-   LOG(LS_INFO, "MQueue_Clear");
+   //LOG(LS_INFO, "MQueue_Clear");
    // Remove messages with phandler
    if (!pMQueue)
       return ;
@@ -841,6 +845,19 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
       return;
    }
     
+#ifdef CHECK_COPY_BUFFER
+    int i=0;
+    int vHEADER_SIZE = 24 + 4;
+    if(pData) {
+        if(pData->len > vHEADER_SIZE) {
+            for (i = vHEADER_SIZE; i < pData->len-vHEADER_SIZE; ++i) {
+                if(pData->pVal[i]==0x00) {
+                    ASSERT(pData->pVal[i]!=0x00);
+                }
+            }
+        }
+    }
+#endif
    // Keep thread safe
    // Add to the priority queue. Gets sorted soonest first.
    // Signal for the multiplexer to return.
@@ -862,13 +879,14 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
          pDMsg->pMsg  = pMsg;
 
          //dmsgq_.push(dmsg);   
-         LOG(LS_INFO, "PQueue_Push");
+         //LOG(LS_INFO, "PQueue_Push");
          //printf("&pIn->dmsgq=0x%x pDMsg=0x%x pDMsg->PQNode=0x%x\n", (U32)&pIn->dmsgq, (U32)pDMsg, (U32)&pDMsg->PQNode);
          PQueue_Push(&pIn->dmsgq, &pDMsg->PQNode);
       }
       else
       {
          free(pMsg);
+         ASSERT(pDMsg!=NULL);          
       }
    }
    
@@ -1022,7 +1040,9 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                free(pmsg->pData);
             }
             //*pmsg = Message();            
-            memset(pmsg, 0, sizeof(*pmsg));
+            //memset(pmsg, 0, sizeof(*pmsg));
+            memset(pmsg, 0, sizeof(tMessage));
+             
             continue;
          }
          return true;

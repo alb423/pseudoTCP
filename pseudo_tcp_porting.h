@@ -36,7 +36,8 @@ extern "C" {
 #include "mi_types.h"
 
 /*** MACROS ******************************************************************/
-
+#define CHECK_COPY_BUFFER
+    
 // LoggingSeverity
 #define LS_ERROR     1
 #define LS_WARNING   2
@@ -47,17 +48,14 @@ extern "C" {
 /*
 #define LOG(sev,x) \
 if(sev <= LS_VERBOSE) fprintf(stderr, "%s, %s:%d, %s\n", __FILE__, __FUNCTION__, __LINE__, x); 
- 
-
 
 */
 
-/*
+
 #define LOG(sev,x) \
 if(sev <= LS_VERBOSE) printf("%s, %s:%d, %s\n", __FILE__, __FUNCTION__, __LINE__, x);
-*/
-    
-#define LOG(sev,x)
+  
+//#define LOG(sev,x)
 #define LOG_F(sev, x) LOG(sev, x)
 
 /*

@@ -1536,7 +1536,7 @@ U32 MI_PQPushTail(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
          while (scan)
          {
             S32 thisprio = pQ->priority(scan);
-            printf("(priority, thisprio) = (%d,%d) 0x%08x 0x%08x\n", priority, thisprio, (U32)pNode, (U32)scan);
+            //printf("(priority, thisprio) = (%d,%d) 0x%08x 0x%08x\n", priority, thisprio, (U32)pNode, (U32)scan);
             if (priority == thisprio)
             {
                 
