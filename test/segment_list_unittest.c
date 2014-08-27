@@ -388,8 +388,8 @@ void Test_SegmentList_s02(void)
    SEGMENT_LIST_push_back(&vDList, &vTCtxt[2].DLNode);
    SEGMENT_LIST_push_back(&vDList, &vTCtxt[4].DLNode);
 
-   SEGMENT_LIST_insert(&vDList, &vTCtxt[2].DLNode, &vTCtxt[1].DLNode);
-   SEGMENT_LIST_insert(&vDList, &vTCtxt[4].DLNode, &vTCtxt[3].DLNode);
+   SEGMENT_LIST_insert(&vDList, &vTCtxt[0].DLNode, &vTCtxt[1].DLNode);
+   SEGMENT_LIST_insert(&vDList, &vTCtxt[2].DLNode, &vTCtxt[3].DLNode);
 
    vpTCtxt = SEGMENT_LIST_back(&vDList);
    CU_ASSERT_EQUAL(vpTCtxt->seq, 4);
@@ -418,6 +418,60 @@ void Test_SegmentList_s02(void)
    CU_ASSERT_EQUAL(bFlag, true);   
 }
 
+    
+void Test_SegmentList_s03(void)
+{
+    bool bFlag;
+    tMI_DLIST vDList;
+    tRSSegment *pTCtxt[5];
+    U32 vI = 0;
+    tRSSegment * vpTCtxt;
+    
+    SEGMENT_LIST_Init(&vDList);
+    
+    for (vI = 0; vI < 5; vI++)
+    {
+        pTCtxt[vI] = malloc(sizeof(tRSSegment));
+        pTCtxt[vI]->seq = vI;
+    }
+    
+    SEGMENT_LIST_push_back(&vDList, &pTCtxt[0]->DLNode);
+    SEGMENT_LIST_push_back(&vDList, &pTCtxt[2]->DLNode);
+    SEGMENT_LIST_push_back(&vDList, &pTCtxt[4]->DLNode);
+    
+    SEGMENT_LIST_insert(&vDList, &pTCtxt[0]->DLNode, &pTCtxt[1]->DLNode);
+    SEGMENT_LIST_insert(&vDList, &pTCtxt[2]->DLNode, &pTCtxt[3]->DLNode);
+    
+    vpTCtxt = SEGMENT_LIST_back(&vDList);
+    CU_ASSERT_EQUAL(vpTCtxt->seq, 4);
+    
+    vpTCtxt = SEGMENT_LIST_end(&vDList);
+    CU_ASSERT_EQUAL(vpTCtxt->seq, 4);
+    
+    SEGMENT_LIST_erase(&vDList, &pTCtxt[0]->DLNode);
+    
+    for (vI = 1; vI < 5; vI++)
+    {
+        vpTCtxt = SEGMENT_LIST_begin(&vDList);
+        CU_ASSERT_NOT_EQUAL(vpTCtxt, NULL);
+        CU_ASSERT_EQUAL(vpTCtxt->seq, vI);
+        
+        vpTCtxt = SEGMENT_LIST_front(&vDList);
+        CU_ASSERT_EQUAL(vpTCtxt->seq, vI);
+        
+        SEGMENT_LIST_pop_front(&vDList);
+        free(vpTCtxt);
+    }
+    
+    vpTCtxt = SEGMENT_LIST_begin(&vDList);
+    CU_ASSERT_EQUAL(vpTCtxt, NULL);
+    
+    bFlag = SEGMENT_LIST_empty(&vDList);
+    CU_ASSERT_EQUAL(bFlag, true);
+
+}
+
+    
 
 /*****************************************************************************/
 

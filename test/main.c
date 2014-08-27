@@ -90,11 +90,11 @@ int main(int argc, char **argv)
 
     
    pSuite = CU_add_suite("Test PseudoTCP", testInit, testClean);
-   CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_01_01);
+   //CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_01_01);
 
 #if 1 
     // Basic end-to-end data transfer tests
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithLoss);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSend);
     
 #else
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSend);

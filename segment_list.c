@@ -32,6 +32,7 @@ extern "C" {
 
 /*** PROJECT INCLUDES ********************************************************/
 #include "segment_list.h"
+#include "pseudo_tcp_porting.h"
 /*** MACROS ******************************************************************/
 
 
@@ -148,12 +149,14 @@ void SEGMENT_LIST_push_front(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 // Removes the first element in the list container.  
 void SEGMENT_LIST_pop_front(tMI_DLIST *pDList) 
 {
-   MI_DlPopHead(pDList);
+   tMI_DLNODE *pNode = MI_DlPopHead(pDList);
+   LOG_ARG(LS_SENSITIVE, pNode);
 }
 
 // Adds a new element at the end of the list container, after its current last element.
 void SEGMENT_LIST_push_back(tMI_DLIST *pDList, tMI_DLNODE *pNode) 
 {
+   LOG_ARG(LS_SENSITIVE, pNode);
    MI_DlPushTail(pDList, pNode);   
 }
 
@@ -166,6 +169,7 @@ void SEGMENT_LIST_pop_back(tMI_DLIST *pDList)
 // Delete current element
 tMI_DLNODE *SEGMENT_LIST_erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 {
+   LOG_ARG(LS_SENSITIVE, pNode);
    if(pDList)
    {
       U32 vIndex;
@@ -188,8 +192,10 @@ tMI_DLNODE *SEGMENT_LIST_erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 }
 
 // inserting new elements before the element at the specified position
+// inserting new elements after the element at the specified position    
 void SEGMENT_LIST_insert(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2)
 {
+   LOG_ARG(LS_SENSITIVE, pNode2);
    //MI_DlInsertBefore(pDList, pNode, pNode2);
    MI_DlInsertAfter(pDList, pNode, pNode2);
 }

@@ -92,6 +92,8 @@ void MemoryStreamTest_TestTransfer(void)
    MS_GetSize(pRecvStream, &vReceived);
    CU_ASSERT_EQUAL(0, memcmp(MS_GetBuffer(pSendStream), MS_GetBuffer(pRecvStream), size));
 
+    MS_Destroy(pRecvStream);
+    MS_Destroy(pSendStream);
 }
 
 /*** Test for List *********************************************/

@@ -85,6 +85,7 @@ extern void MS_Destroy(tMemoryStream *pStream) {
    {
       if(pStream->buffer_alloc_)
          free(pStream->buffer_alloc_);
+       free(pStream);
    }
 }
 

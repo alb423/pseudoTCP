@@ -307,18 +307,35 @@ tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv) {
 
 void PTCP_Destroy(tPseudoTcp *pPTCP) {
     if(pPTCP) {
+        if(pPTCP->m_rbuf) {
+            FIFO_Destroy(pPTCP->m_rbuf);
+        }
         
-        FIFO_Destroy(pPTCP->m_rbuf);
-        FIFO_Destroy(pPTCP->m_sbuf);
-        
+        if(pPTCP->m_sbuf) {
+            FIFO_Destroy(pPTCP->m_sbuf);
+        }
+
         // TODO: if there are data in m_rlist or m_slist, we should remove them here
         if(pPTCP->m_rlist) {
+            while(pPTCP->m_rlist->count!=0) {
+                tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_rlist);
+                if(vpRSSeg) {
+                    free(vpRSSeg);
+                }
+                SEGMENT_LIST_pop_front(pPTCP->m_rlist);
+            }
             free(pPTCP->m_rlist);
         }
         if(pPTCP->m_slist) {
+            while(pPTCP->m_slist->count!=0) {
+                tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_slist);
+                if(vpRSSeg) {
+                    free(vpRSSeg);
+                }
+                SEGMENT_LIST_pop_front(pPTCP->m_slist);
+            }
             free(pPTCP->m_slist);
         }
-        
         free(pPTCP);
     }
 }
@@ -572,10 +589,7 @@ int PTCP_Send(tPseudoTcp *pPTCP, const U8* buffer, size_t len) {
 }
 
 void PTCP_Close(tPseudoTcp *pPTCP, bool force) {
-   char pTmp[1024]={0};
-   ASSERT(pPTCP!=NULL);   
-   sprintf(pTmp,"PTCP_Close(%s)", (force ? "true" : "false"));
-   LOG(LS_VERBOSE, pTmp);
+   LOG_ARG(LS_VERBOSE, force);
    pPTCP->m_shutdown = force ? SD_FORCEFUL : SD_GRACEFUL;
 }
 
@@ -860,7 +874,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
       for (nFree = nAcked; nFree > 0; ) {
          ASSERT(!SEGMENT_LIST_empty(pPTCP->m_slist));
          
-         tRSSegment *vpRSSegment;
+         tRSSegment *vpRSSegment = NULL;
          vpRSSegment = SEGMENT_LIST_front(pPTCP->m_slist);
          if(vpRSSegment)
          {
@@ -873,6 +887,8 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
                }
                nFree -= vpRSSegment->len;
                SEGMENT_LIST_pop_front(pPTCP->m_slist);
+                // 20140827
+               //free(vpRSSegment);
             }
          }
          else {
@@ -1065,6 +1081,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg) {
                {
                   break;
                }
+               free(it);
                it = MI_NODEENTRY(vpNode, tRSSegment, DLNode);
             }
          } else {
@@ -1402,16 +1419,15 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len) {
    {
       tMI_DLNODE DLNode;
       U8 val;
-   } tSet;   
+   } tSet;
+    
    tMI_DLIST options_specified;
-   
    
    // See http://www.freesoft.org/CIE/Course/Section4/8.htm for
    // parsing the options list.
    //talk_base::ByteBuffer buf(data, len);
    U32 vLength = 0, vIndex = 0, opt_len = 0;
-   U8 *buf = malloc(len);
-   memcpy(buf, data, len);
+   U8 *buf = (U8 *)data;
    vLength = len;
    
    // TODO: remove medump
@@ -1466,21 +1482,22 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len) {
 
    
    bool bFind = false;
-   tMI_DLNODE *vpNode = MI_DlFirst(&options_specified);
-   tSet       *vpSet;
-   while(vpNode!=NULL)
-   {
-      vpSet = MI_NODEENTRY(vpNode, tSet, DLNode);
-      if(vpSet)
-      {
-         if(vpSet->val == TCP_OPT_WND_SCALE)
-         {
-            bFind = true;
-            break;
-         }
-      }
-      vpNode = vpNode->next;
-   }
+    tMI_DLNODE *vpNode = MI_DlFirst(&options_specified);
+    tSet       *vpSet;
+    while(vpNode!=NULL)
+    {
+        vpSet = MI_NODEENTRY(vpNode, tSet, DLNode);
+        if(vpSet)
+        {
+            if(vpSet->val == TCP_OPT_WND_SCALE)
+            {
+                bFind = true;
+                break;
+            }
+        }
+        vpNode = vpNode->next;
+    }
+
 
    //if (options_specified.find(TCP_OPT_WND_SCALE) == options_specified.end()) {   
    if(bFind==false)

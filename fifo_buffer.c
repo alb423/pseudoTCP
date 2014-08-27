@@ -147,12 +147,11 @@ void FIFO_Destroy(tFIFO_BUFFER *pFifo)
 {
    if(pFifo)
    {
+      pthread_mutex_destroy(&pFifo->mutex);
       if(pFifo->buffer)
       {
          free(pFifo->buffer);
-         return;
       }
-      pthread_mutex_destroy(&pFifo->mutex);
       free(pFifo);
    }
 }
