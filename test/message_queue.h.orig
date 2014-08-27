@@ -39,50 +39,50 @@ extern "C" {
 
 /*** GLOBAL TYPES DEFINITIONS ************************************************/
 enum ThreadPriority {
-    PRIORITY_IDLE = -1,
-    PRIORITY_NORMAL = 0,
-    PRIORITY_ABOVE_NORMAL = 1,
-    PRIORITY_HIGH = 2,
+  PRIORITY_IDLE = -1,
+  PRIORITY_NORMAL = 0,
+  PRIORITY_ABOVE_NORMAL = 1,
+  PRIORITY_HIGH = 2,
 };
 
 typedef struct MessageHandler {
-    int haha;
+   int haha;
 } tMessageHandler;
 
 
 typedef struct tMessageData {
-    size_t   len; // U32 or U64
-    U8   *pVal;
+   size_t   len; // U32 or U64
+   U8   *pVal;   
 } tMessageData;
 
 
 typedef struct tMessage {
-    tMI_DLNODE DLNode;
-    U32   ts_sensitive;
-    U32   message_id;
-    tMessageData *pData;
-    tMessageHandler *phandler;
+   tMI_DLNODE DLNode;
+   U32   ts_sensitive;   
+   U32   message_id;
+   tMessageData *pData;
+   tMessageHandler *phandler;
 } tMessage;
 
 typedef struct tDelayMessage {
-    tMI_PQNODE PQNode;
-    int cmsDelay;  // for debugging
-    U32 msTrigger;
-    U32 num;
-    tMessage *pMsg;
+   tMI_PQNODE PQNode;
+   int cmsDelay;  // for debugging
+   U32 msTrigger;
+   U32 num;
+   tMessage *pMsg;
 } tDelayMessage;
 
 typedef void  (* tOnMessageCB)(tMessage* message);
 
 typedef struct tMessageQueue {
-    bool fStop;
-    bool fPeekKeep;
-    tMessage msgPeek;
-    tMI_DLIST      msgq;
-    tMI_PQUEUE     dmsgq;
-    U32 dmsgq_next_num;
-    tOnMessageCB pOnMessageCB;
-    pthread_t         thread;
+   bool fStop;
+   bool fPeekKeep;
+   tMessage msgPeek;
+   tMI_DLIST      msgq;
+   tMI_PQUEUE     dmsgq;
+   U32 dmsgq_next_num;
+   tOnMessageCB pOnMessageCB;
+   pthread_t         thread;
 } tMessageQueue;
 
 
@@ -94,7 +94,7 @@ typedef struct tMessageQueue {
 
 /*** PUBLIC FUNCTION PROTOTYPES **********************************************/
 
-// Message List
+// Message List 
 extern void MList_Init(tMI_DLIST *pDList);
 extern tMessage *MList_Begin(tMI_DLIST *pDList);
 extern tMessage *MList_End(tMI_DLIST *pDList);
@@ -119,7 +119,7 @@ extern tDelayMessage * PQueue_Top(tMI_PQUEUE *pPQueue);
 extern tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode);
 extern void PQueue_Dump(tMI_PQUEUE *pQ); // for debug
 
-// Message Queue
+// Message Queue 
 extern tMessageQueue * MQueue_Init(tOnMessageCB pCB);
 extern void MQueue_Quit(tMessageQueue *pIn);
 extern void MQueue_Restart(tMessageQueue *pIn);
@@ -140,7 +140,7 @@ extern bool MQueue_Peek(tMessageQueue *pIn, tMessage *pmsg, int cmsWait);
 extern bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io);
 
 
-// Event
+// Event 
 void Event_Init(bool manual_reset, bool initially_signaled);
 void Event_Destroy(void);
 void Event_Set(void);

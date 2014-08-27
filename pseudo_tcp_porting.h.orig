@@ -37,7 +37,7 @@ extern "C" {
 
 /*** MACROS ******************************************************************/
 //#define CHECK_COPY_BUFFER  // For debug only
-
+    
 // LoggingSeverity
 #define LS_ERROR     1
 #define LS_WARNING   2
@@ -45,15 +45,15 @@ extern "C" {
 #define LS_VERBOSE   4
 #define LS_SENSITIVE 5
 #define LS_LEVEL LS_VERBOSE
-
+    
 // if(sev <= LS_ERROR) printf("%s, %s:%d, %s\n", __FILE__, __FUNCTION__, __LINE__, x);
 #define LOG(sev,x) \
 if(sev <= LS_LEVEL) printf("%s:%d, %s\n",__FUNCTION__, __LINE__, x);
-
+  
 #define LOG_ARG(sev,x) \
     if(sev <= LS_LEVEL) printf("%s:%d, %s 0x%08x\n",__FUNCTION__, __LINE__, #x, (U32)x);
-
-
+        
+        
 //#define LOG(sev,x)
 #define LOG_F(sev, x) LOG(sev, x)
 
@@ -64,7 +64,7 @@ inline bool Assert(bool result, const char* function, const char* file,
       fprintf(stderr, "%s %s:%d %s\n", function, file, line, expression);
       // On POSIX systems, SIGTRAP signals debuggers to break without killing the
       // process. If a debugger isn't attached, the uncaught SIGTRAP will crash the
-      // app.
+      // app.    
       raise(SIGTRAP);
       return false;
    }

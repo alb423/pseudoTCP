@@ -44,48 +44,55 @@ extern "C" {
 ({ __typeof__ (a) _a = (a); \
     __typeof__ (b) _b = (b); \
   _a > _b ? _a : _b; })
-
+  
 #define MIN(a,b) \
 ({ __typeof__ (a) _a = (a); \
     __typeof__ (b) _b = (b); \
-  _a < _b ? _a : _b; })
-
+  _a < _b ? _a : _b; })     
+  
 /*** GLOBAL TYPES DEFINITIONS ************************************************/
-typedef struct tMI_DLNODE {
-    struct tMI_DLNODE *next;
-    struct tMI_DLNODE *prev;
+typedef struct tMI_DLNODE
+{
+   struct tMI_DLNODE *next;
+   struct tMI_DLNODE *prev;
 } tMI_DLNODE;
 
-typedef struct tMI_DLIST {
-    tMI_DLNODE node;
-    U32 count;
+typedef struct tMI_DLIST
+{
+   tMI_DLNODE node;
+   U32 count;
 } tMI_DLIST;
 
-typedef struct tMI_HNODE {
-    struct tMI_HNODE *link;
+typedef struct tMI_HNODE
+{
+   struct tMI_HNODE *link;
 } tMI_HNODE;
 
-typedef struct tMI_HASH {
-    U32 (*hash)(const void *);
-    S32 (*compare)(const void *, const void *);
-    const void *(*keyof)(const tMI_HNODE *);
-    tMI_HNODE **table;
-    U32 nbuckets;
-    U32 count;
+typedef struct tMI_HASH
+{
+   U32 (*hash)(const void *);
+   S32 (*compare)(const void *, const void *);
+   const void *(*keyof)(const tMI_HNODE *);
+   tMI_HNODE **table;
+   U32 nbuckets;
+   U32 count;
 } tMI_HASH;
 
-typedef struct tMI_PQNODE {
-    struct {
-        struct tMI_PQNODE *next;
-        struct tMI_PQNODE *previous;
-    } v, h;
+typedef struct tMI_PQNODE
+{
+   struct
+   {
+      struct tMI_PQNODE *next;
+      struct tMI_PQNODE *previous;
+   } v, h;
 } tMI_PQNODE;
 
-typedef struct tMI_PQUEUE {
-    tMI_PQNODE *head;
-    tMI_PQNODE *tail;
-    U32 count;
-    S32 (*priority)(const tMI_PQNODE *);
+typedef struct tMI_PQUEUE
+{
+   tMI_PQNODE *head;
+   tMI_PQNODE *tail;
+   U32 count;
+   S32 (*priority)(const tMI_PQNODE *);
 } tMI_PQUEUE;
 /******/
 

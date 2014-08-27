@@ -1,7 +1,7 @@
 /**
  * @file    pseudo_tcp_unittest.c
  * @brief   pseudoTCP
- *
+ *          
  *
  * @version $Revision$
  * @date    $Date$
@@ -58,47 +58,41 @@ extern CU_ErrorCode CU_basic_run_tests(void);
 
 
 /*** PUBLIC FUNCTION DEFINITIONS *********************************************/
-static int testInit(void)
-{
-    return 0;
-}
-static int testClean(void)
-{
-    return 0;
-}
+static int testInit(void) {return 0;}
+static int testClean(void) {return 0;}
 void testAssertTrue(void);
 
 int main(int argc, char **argv)
 {
-    CU_pSuite pSuite;
-    printf("test\n");
-    CU_initialize_registry();
-
+   CU_pSuite pSuite;
+   printf("test\n");
+   CU_initialize_registry();
+    
 #if 0
-    // Test Successful
-    pSuite = CU_add_suite("Test FIFO", testInit, testClean);
-    CU_add_test(pSuite, "FifoBufferTest_FullBufferCheck", FifoBufferTest_FullBufferCheck);
-    CU_add_test(pSuite, "FifoBufferTest_WriteOffsetAndReadOffset", FifoBufferTest_WriteOffsetAndReadOffset);
-    CU_add_test(pSuite, "FifoBufferTest_All", FifoBufferTest_All);
+   // Test Successful
+   pSuite = CU_add_suite("Test FIFO", testInit, testClean);
+   CU_add_test(pSuite, "FifoBufferTest_FullBufferCheck", FifoBufferTest_FullBufferCheck);
+   CU_add_test(pSuite, "FifoBufferTest_WriteOffsetAndReadOffset", FifoBufferTest_WriteOffsetAndReadOffset);   
+   CU_add_test(pSuite, "FifoBufferTest_All", FifoBufferTest_All);
 
-    pSuite = CU_add_suite("Test Segment List", testInit, testClean);
-    CU_add_test(pSuite, "Test_DoubleLinkList_s01", Test_DoubleLinkList_s01);
-    CU_add_test(pSuite, "Test_DoubleLinkList_s02", Test_DoubleLinkList_s02);
-    CU_add_test(pSuite, "Test_DoubleLinkList_s03", Test_DoubleLinkList_s03);
-    CU_add_test(pSuite, "Test_DoubleLinkList_s04", Test_DoubleLinkList_s04);
-    CU_add_test(pSuite, "Test_SegmentList_s01", Test_SegmentList_s01);
-    CU_add_test(pSuite, "Test_SegmentList_s02", Test_SegmentList_s02);
-
-    pSuite = CU_add_suite("Test Memory Stream", testInit, testClean);
-    CU_add_test(pSuite, "MemoryStreamTest_TestTransfer", MemoryStreamTest_TestTransfer);
+   pSuite = CU_add_suite("Test Segment List", testInit, testClean);
+   CU_add_test(pSuite, "Test_DoubleLinkList_s01", Test_DoubleLinkList_s01);
+   CU_add_test(pSuite, "Test_DoubleLinkList_s02", Test_DoubleLinkList_s02);
+   CU_add_test(pSuite, "Test_DoubleLinkList_s03", Test_DoubleLinkList_s03);
+   CU_add_test(pSuite, "Test_DoubleLinkList_s04", Test_DoubleLinkList_s04);
+   CU_add_test(pSuite, "Test_SegmentList_s01", Test_SegmentList_s01);
+   CU_add_test(pSuite, "Test_SegmentList_s02", Test_SegmentList_s02);
+      
+   pSuite = CU_add_suite("Test Memory Stream", testInit, testClean);
+   CU_add_test(pSuite, "MemoryStreamTest_TestTransfer", MemoryStreamTest_TestTransfer);
 
 #else
 
+    
+   pSuite = CU_add_suite("Test PseudoTCP", testInit, testClean);
+   //CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_01_01);
 
-    pSuite = CU_add_suite("Test PseudoTCP", testInit, testClean);
-    //CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_01_01);
-
-#if 1
+#if 1 
     // Basic end-to-end data transfer tests
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSend);
 
@@ -119,7 +113,7 @@ int main(int argc, char **argv)
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendBothUseLargeWindowScale);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendSmallReceiveBuffer);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendVerySmallReceiveBuffer);
-
+    
     // Ping-pong (request/response) tests
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong1xMtu);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong3xMtu);
@@ -129,31 +123,31 @@ int main(int argc, char **argv)
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegments);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithNaglingOff);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithAckDelayOff);
-
+    
     // Test Receive Window
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestReceiveWindow);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize);
 #endif
-
-
+    
+    
 #endif
 
 
-    //CU_console_run_tests();
-    CU_basic_run_tests();
-    CU_cleanup_registry();
-    return 0;
+   //CU_console_run_tests();
+   CU_basic_run_tests();
+   CU_cleanup_registry();
+   return 0;    
 }
 
 
 void testAssertTrue(void)
 {
-    CU_ASSERT_TRUE(CU_TRUE);
-    CU_ASSERT_TRUE(!CU_FALSE);
+   CU_ASSERT_TRUE(CU_TRUE);
+   CU_ASSERT_TRUE(!CU_FALSE);
 
-    //CU_ASSERT_TRUE(!CU_TRUE);
-    //CU_ASSERT_TRUE(CU_FALSE);
+   //CU_ASSERT_TRUE(!CU_TRUE);
+   //CU_ASSERT_TRUE(CU_FALSE);
 }
 
 /*****************************************************************************/
