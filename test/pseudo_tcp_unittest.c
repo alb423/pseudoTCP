@@ -144,6 +144,7 @@ tPseudoTcpForTestBase *_gpPTCPTest;
 tPseudoTcpForTestBase * PseudoTcpTestBase_Init(U32 conv)
 {
     tIPseudoTcpNotify *notify = malloc(sizeof(tIPseudoTcpNotify));
+    memset(notify, 0, sizeof(tIPseudoTcpNotify));
     notify->OnTcpOpen       = (tOnTcpOpenCB)OnTcpOpen_01;
     notify->OnTcpReadable   = (tOnTcpReadableCB)OnTcpReadable_01;
     notify->OnTcpWriteable  = (tOnTcpWriteableCB)OnTcpWriteable_01;
@@ -177,40 +178,71 @@ tPseudoTcpForTestBase * PseudoTcpTestBase_Init(U32 conv)
     return pPTCPTest;
 }
 
-void PseudoTcpTestBase_Destroy(tPseudoTcpForTestBase *pPTCPTest)
+void PseudoTcpTestBase_Destroy(tPseudoTcpForTestBase *pPTCPTestBase)
 {
-    if(pPTCPTest) {
+    printf("PseudoTcpTestBase_Destroy\n");
+    if(pPTCPTestBase) {
+        
+#if 1
         printf("Destroy  pPTCPTest->local_\n");
-        if(pPTCPTest->local_->m_rlist) {
-            printf("\tpPTCP->m_rlist->count=%d\n",pPTCPTest->local_->m_rlist->count);
+        if(pPTCPTestBase->local_->m_rlist) {
+            printf("\tpPTCP->m_rlist->count=%d\n",pPTCPTestBase->local_->m_rlist->count);
+            if(pPTCPTestBase->local_->m_rlist->count!=0) {
+                SEGMENT_LIST_Dump(pPTCPTestBase->local_->m_rlist);
+            }
         }
-        if(pPTCPTest->local_->m_slist) {
-            printf("\tpPTCP->m_slist->count=%d\n",pPTCPTest->local_->m_slist->count);
+        if(pPTCPTestBase->local_->m_slist) {
+            printf("\tpPTCP->m_slist->count=%d\n",pPTCPTestBase->local_->m_slist->count);
+            if(pPTCPTestBase->local_->m_slist->count!=0) {
+                SEGMENT_LIST_Dump(pPTCPTestBase->local_->m_slist);
+            }
         }
-        PTCP_Destroy(pPTCPTest->local_);
-
-
         printf("Destroy  pPTCPTest->remote_\n");
-        if(pPTCPTest->remote_->m_rlist) {
-            printf("\tpPTCP->m_rlist->count=%d\n",pPTCPTest->remote_->m_rlist->count);
+        if(pPTCPTestBase->remote_->m_rlist) {
+            printf("\tpPTCP->m_rlist->count=%d\n",pPTCPTestBase->remote_->m_rlist->count);
+            if(pPTCPTestBase->remote_->m_rlist->count!=0) {
+                SEGMENT_LIST_Dump(pPTCPTestBase->remote_->m_rlist);
+            }
         }
-        if(pPTCPTest->remote_->m_slist) {
-            printf("\tpPTCP->m_slist->count=%d\n",pPTCPTest->remote_->m_slist->count);
+        if(pPTCPTestBase->remote_->m_slist) {
+            printf("\tpPTCP->m_slist->count=%d\n",pPTCPTestBase->remote_->m_slist->count);
+            if(pPTCPTestBase->remote_->m_slist->count!=0) {
+                SEGMENT_LIST_Dump(pPTCPTestBase->remote_->m_slist);
+            }
         }
-        PTCP_Destroy(pPTCPTest->remote_);
 
-        MS_Destroy(pPTCPTest->send_stream_);
-        MS_Destroy(pPTCPTest->recv_stream_);
+        if(pPTCPTestBase->msq){
+            printf("Destroy  pPTCPTestBase->msq\n");
+            printf("\tmsgq->count=%d\n",pPTCPTestBase->msq->msgq.count);
+            if(pPTCPTestBase->msq->msgq.count!=0) {
+                //
+            }
+            printf("\tdmsgq->count=%d\n",pPTCPTestBase->msq->dmsgq.count);
+            if(pPTCPTestBase->msq->dmsgq.count!=0) {
+                PQueue_Dump(&pPTCPTestBase->msq->dmsgq);
+            }
+        }
+#endif
+        
+        MQueue_Quit(pPTCPTestBase->msq);
+        
+        MS_Destroy(pPTCPTestBase->send_stream_);
+        MS_Destroy(pPTCPTestBase->recv_stream_);
+        
+        PTCP_Destroy(pPTCPTestBase->local_);
+        PTCP_Destroy(pPTCPTestBase->remote_);
 
-
-        pthread_t threadId =  pPTCPTest->msq->thread;
-        MQueue_Quit(pPTCPTest->msq);
-        MQueue_Destroy(pPTCPTest->msq);
-        pthread_join(threadId, NULL);
+        MQueue_Destroy(pPTCPTestBase->msq);
+        
+        //pthread_t threadId =  pPTCPTest->msq->thread;
+        //pthread_join(threadId, NULL);
         //pthread_join(pPTCPTest->msq->thread, NULL);
         //MQueue_Quit(pPTCPTest->msq);
         //MQueue_Destroy(pPTCPTest->msq);
-        free(pPTCPTest);
+        free(pPTCPTestBase);
+    }
+    else {
+        printf("\tpPTCP is NULL\n");
     }
 
     _gpLocal    = NULL;
@@ -303,6 +335,7 @@ void UpdateRemoteClock()
 void OnMessage(tMessage* message)
 {
     //LOG(LS_INFO, "OnMessage\n");
+    //printf("OnMessage message->message_id=%d\n", message->message_id);
     switch (message->message_id) {
     case MSG_LPACKET: {
         PTCP_NotifyPacket(_gpLocal, message->pData->pVal, message->pData->len);
@@ -335,7 +368,6 @@ void OnMessage(tMessage* message)
         }
         free(message->pData);
     }
-
 }
 
 
@@ -439,8 +471,11 @@ void OnTcpReadable_01(tPseudoTcp* tcp)
         size_t received, required;
         MS_GetPosition(_gpPTCPTest->recv_stream_, &received);
         MS_GetSize(_gpPTCPTest->send_stream_, &required);
-        if (received == required)
+        if (received == required) {
+            // TODO: send ack back to _gpLocal, albert.liao
             OnTcpClosed_01(_gpRemote, 0);
+        }
+        
     }
 }
 
@@ -488,11 +523,12 @@ void OnTcpClosed_01(tPseudoTcp* pPTCP, U32 error)
     // Consider ourselves closed when the remote side gets OnTcpClosed.
     // TODO: OnTcpClosed is only ever notified in case of error in
     // the current implementation.  Solicited close is not (yet) supported.
-    //if (pPTCP == _gpRemote) { LOG(LS_INFO, "_gpRemote"); }
-    //else { LOG(LS_INFO, "_gpLocal"); }
+    if (pPTCP == _gpRemote) { LOG(LS_INFO, "_gpRemote"); }
+    else { LOG(LS_INFO, "_gpLocal"); }
     printf("%s error = %u\n", __func__, error);
     CU_ASSERT_EQUAL(0U, error);
     if (pPTCP == _gpRemote) {
+        // We should send ack to client, otherwise client won't free the resource that have not acked.
         _gpPTCPTest->have_disconnected_ = true;
     }
 
@@ -519,6 +555,7 @@ tWriteResult TcpWritePacket_01(tPseudoTcp* pPTCP, const char* buffer, size_t len
         int id = (pPTCP == _gpLocal) ? MSG_RPACKET : MSG_LPACKET;
 
         tMessageData *pData = malloc(sizeof(tMessageData));
+        memset(pData, 0, sizeof(tMessageData));
         pData->pVal = malloc(len+1);
         if(!pData->pVal) {
             ASSERT(pData->pVal!=NULL);
@@ -675,6 +712,7 @@ static void _Push_PQNode(tMI_PQUEUE *pPQueue, int id, tMessageData *pData, int c
     tDelayMessage *pDMsg;
     pMsg = malloc(sizeof(tMessage));
     if(pMsg) {
+        memset(pMsg, 0, sizeof(tMessage));
         //tMessageData *pData = malloc(sizeof(tMessageData));
         pMsg->phandler = NULL;
         pMsg->message_id = id;
@@ -683,6 +721,7 @@ static void _Push_PQNode(tMI_PQUEUE *pPQueue, int id, tMessageData *pData, int c
 
         pDMsg = malloc(sizeof(tDelayMessage));
         if(pDMsg) {
+            memset(pDMsg, 0, sizeof(tDelayMessage));
             pDMsg->cmsDelay  = cmsDelay;
             pDMsg->msTrigger  = msTrigger;
             pDMsg->num  = num;
@@ -696,11 +735,13 @@ static void _Push_PQNode(tMI_PQUEUE *pPQueue, int id, tMessageData *pData, int c
 void PseudoTcpTest_01_01(void)
 {
     U32 i, now;
+    
     tDelayMessage *pDMsg = NULL;
     tMI_PQNODE *pPQNode = NULL;
+    tMI_PQNODE *pItem1, *pItem2, *pItem3, *pItem4;
     tMI_PQUEUE *pPQueue = malloc(sizeof(tMI_PQUEUE));
 
-    tMI_PQNODE *pItem1, *pItem2, *pItem3, *pItem4;
+    memset(pPQueue, 0, sizeof(tMI_PQUEUE));
     PQueue_Init(pPQueue);
 
     CU_ASSERT_EQUAL(0, PQueue_Size(pPQueue));
@@ -981,9 +1022,9 @@ void PseudoTcpTest_TestSend(void)
 
     // When size > 1443 (1500-PACKET_OVERHEAD), the data need demutiplex
     //TestTransfer_01(1024);
-    //TestTransfer_01(1500);
+    TestTransfer_01(1500);
     //TestTransfer_01(30000);
-    TestTransfer_01(1000000);
+    //TestTransfer_01(1000000);
 
     PseudoTcpTestBase_Destroy(pTest);
 }

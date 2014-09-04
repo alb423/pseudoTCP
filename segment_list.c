@@ -180,15 +180,47 @@ tMI_DLNODE *SEGMENT_LIST_erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
     return NULL;
 }
 
-// inserting new elements before the element at the specified position
+
 // inserting new elements after the element at the specified position
-void SEGMENT_LIST_insert(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2)
+void SEGMENT_LIST_insertBefore(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2)
 {
     LOG_ARG(LS_SENSITIVE, pNode2);
-    //MI_DlInsertBefore(pDList, pNode, pNode2);
-    MI_DlInsertAfter(pDList, pNode, pNode2);
+    MI_DlInsertBefore(pDList, pNode, pNode2);
 }
 
+// inserting new elements before the element at the specified position
+void SEGMENT_LIST_insertAfter(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2)
+{
+    LOG_ARG(LS_SENSITIVE, pNode);    
+    LOG_ARG(LS_SENSITIVE, pNode2);
+    MI_DlInsertAfter(pDList, pNode, pNode2);
+}
+    
+void SEGMENT_LIST_Dump(tMI_DLIST *pDList)
+{
+#if LS_LEVEL == LS_SENSITIVE
+    if(pDList) {
+        printf("Dump list count=%d (node=0x%08x) (next=0x%08x) (prev=0x%08x)\n", pDList->count, (U32)&pDList->node,
+               (U32)pDList->node.next, (U32)pDList->node.prev);
+        
+        tMI_DLNODE *vpNode = MI_DlFirst(pDList);
+        tRSSegment *it;
+        
+        while(vpNode) {
+
+            it = MI_NODEENTRY(vpNode, tRSSegment, DLNode);
+            
+            //printf("xmit=%d node=0x%08x (next=0x%08x) (prev=0x%08x)\n", it->xmit, (U32)vpNode, (U32)vpNode->next, (U32)vpNode->prev);
+            
+            if(vpNode->next!=0) {
+                vpNode = vpNode->next;
+            }
+            else
+                break;
+        }
+    }
+#endif
+}
 /*****************************************************************************/
 
 #ifdef __cplusplus

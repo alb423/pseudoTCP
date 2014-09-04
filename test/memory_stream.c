@@ -57,11 +57,12 @@ static const int kAlignment = 16;
 
 /*** PUBLIC FUNCTION DEFINITIONS *********************************************/
 
-extern tMemoryStream * MS_Init(const void* pData, size_t length)
+tMemoryStream * MS_Init(const void* pData, size_t length)
 {
     tMemoryStream *pStream = NULL;
     pStream = malloc(sizeof(tMemoryStream));
     if(pStream) {
+        memset(pStream, 0, sizeof(tMemoryStream));
         pStream->buffer_length_ = length;
         pStream->data_length_ = 0;
         pStream->seek_position_ = 0;
@@ -78,7 +79,7 @@ extern tMemoryStream * MS_Init(const void* pData, size_t length)
         return NULL;
 }
 
-extern void MS_Destroy(tMemoryStream *pStream)
+void MS_Destroy(tMemoryStream *pStream)
 {
     if(pStream) {
         if(pStream->buffer_alloc_)

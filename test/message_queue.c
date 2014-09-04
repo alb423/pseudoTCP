@@ -168,6 +168,10 @@ void MList_Push_Front(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 void MList_Pop_Front(tMI_DLIST *pDList)
 {
     MI_DlPopHead(pDList);
+    
+//    tMI_DLNODE *pNode;
+//    pNode = MI_DlPopHead(pDList);
+//    printf("%s node=0x%08x\n", __func__, (U32)pNode);
 }
 
 // Adds a new element at the end of the list container, after its current last element.
@@ -186,6 +190,12 @@ void MList_Pop_Back(tMI_DLIST *pDList)
 // Delete current element
 tMI_DLNODE *MList_Erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 {
+#if _DEBUGMSG >= _DBG_VERBOSE
+    char pTmpBuf[1024]= {0};
+    sprintf(pTmpBuf, "%s pNode=0x%08x\n", __func__, (U32)pNode);
+    LOG(LS_VERBOSE, pTmpBuf);
+#endif // _DEBUGMSG
+
     if(pDList) {
         U32 vIndex;
         tMI_DLNODE *vpNode = NULL;
@@ -220,7 +230,6 @@ void PQueue_Dump(tMI_PQUEUE *pQ)
 #else
 void PQueue_Dump(tMI_PQUEUE *pQ)
 {
-
     tMI_PQNODE *vpTest = pQ->head;
     tMI_PQNODE *vpVNode = pQ->head;
     if(pQ->head) {
@@ -606,8 +615,6 @@ void MQueue_Destroy(tMessageQueue *vpIn)
     // TODO: send signal to the MQueue thread to destroy MQueue
 
     if(vpIn) {
-        //MList_Init(&vpIn->msgq);
-        //PQueue_Init(&vpIn->dmsgq);
         MQueue_Quit(vpIn);
         pthread_mutex_destroy(&_mutex);
         pthread_cond_destroy(&_cond);
@@ -675,8 +682,12 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
                         free(pMsg->pData);
                     }
                 }
+                
                 //it = msgq_.erase(it);
                 pDLNode = MList_Erase(&pMQueue->msgq, pDLNode);
+                // TODO: check here
+                //if(!removed) free(pMsg);
+                
             } else {
                 // ++it;
                 pDLNode = MI_DlNext(pDLNode);
@@ -716,10 +727,12 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
                                         }
                                         free(pMsg->pData);
                                     }
+                                    free(pMsg);
                                 }
 
                                 // remove item in queue
                                 pPQNode = PQueue_Erase(&pMQueue->dmsgq, pPQNode);
+                                free(pDelayMsg);
                                 break;
                             }
                         }
@@ -783,6 +796,7 @@ void MQueue_Post(tMessageQueue *pIn, tMessageHandler *phandler, U32 id, tMessage
     LOG(LS_INFO, "pthread_mutex_lock _mutex");
     pthread_mutex_lock(&_mutex);
     tMessage *pMsg = malloc(sizeof(tMessage));
+    memset(pMsg, 0, sizeof(tMessage));
     pMsg->phandler = phandler;
     pMsg->message_id = id;
     pMsg->pData = pData;
@@ -802,7 +816,6 @@ void MQueue_Post(tMessageQueue *pIn, tMessageHandler *phandler, U32 id, tMessage
 void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
                         tMessageHandler *phandler, U32 id, tMessageData *pData)
 {
-
     ASSERT(pIn != NULL);
 
     pthread_mutex_lock(&_mutex);
@@ -833,12 +846,14 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
     //pthread_mutex_lock(&_mutex);
     tMessage *pMsg = malloc(sizeof(tMessage));
     if(pMsg) {
+        memset(pMsg, 0, sizeof(tMessage));
         pMsg->phandler = phandler;
         pMsg->message_id = id;
         pMsg->pData = pData;
 
         tDelayMessage  *pDMsg = malloc(sizeof(tDelayMessage));
         if(pDMsg) {
+            memset(pDMsg, 0, sizeof(tDelayMessage));
             pDMsg->cmsDelay  = cmsDelay;
             pDMsg->msTrigger  = tstamp;
             pDMsg->num  = pIn->dmsgq_next_num;
@@ -941,6 +956,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
     int cmsElapsed = 0;
     U32 msStart = Time();
     U32 msCurrent = msStart;
+    
     while (true) {
         // Check for sent messages
         //ReceiveSends();
@@ -974,6 +990,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                             //printf("__LINE__ : %d 0x%x\n", __LINE__, (U32)&pIn->dmsgq);
                             MList_Push_Back(&pIn->msgq, &(pDelayMsg->pMsg->DLNode));
                             PQueue_Pop(&pIn->dmsgq);
+                            free(pDelayMsg);
                         }
                     }
                 }
@@ -984,8 +1001,14 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                     break;
                 } else {
                     tMessage *pTmpMsg = MList_Front(&pIn->msgq);
-                    *pmsg = *pTmpMsg;
-                    MList_Pop_Front(&pIn->msgq);
+                    if(pTmpMsg)
+                    {
+                        // copy the structure from pTmpMsg to pmsg
+                        *pmsg = *pTmpMsg;
+                        MList_Pop_Front(&pIn->msgq);
+                        // TODO: check here
+                        //free(pTmpMsg);
+                    }
                 }
 
             }  // crit_ is released here.
@@ -1017,9 +1040,12 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                 //*pmsg = Message();
                 //memset(pmsg, 0, sizeof(*pmsg));
                 memset(pmsg, 0, sizeof(tMessage));
-
+                free(pmsg);
                 continue;
             }
+            
+            
+            // Now we return a pmsg with correct data
             return true;
         }
 

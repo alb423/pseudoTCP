@@ -143,10 +143,13 @@ tFIFO_BUFFER * FIFO_Create(size_t vSize, tFIFO_CB pReadCB, tFIFO_CB pWriteCB)
 void FIFO_Destroy(tFIFO_BUFFER *pFifo)
 {
     if(pFifo) {
-        pthread_mutex_destroy(&pFifo->mutex);
+        pthread_mutex_lock(&pFifo->mutex);
         if(pFifo->buffer) {
             free(pFifo->buffer);
         }
+        pthread_mutex_unlock(&pFifo->mutex);
+        
+        pthread_mutex_destroy(&pFifo->mutex);
         free(pFifo);
     }
 }
@@ -250,6 +253,7 @@ bool FIFO_SetCapacity(tFIFO_BUFFER *pFifo, size_t size)
 
     if (size != pFifo->buffer_length) {
         U8* vpBuffer = malloc(size);
+        memset(vpBuffer, 0, size);
         const size_t copy = pFifo->data_length;
         const size_t tail_copy = MIN(copy, pFifo->buffer_length - pFifo->read_position);
         memcpy(vpBuffer, &pFifo->buffer[pFifo->read_position], tail_copy);
@@ -602,8 +606,6 @@ const void* FIFO_GetReadData(tFIFO_BUFFER *pFifo, size_t* size)
 
 void FIFO_ConsumeReadData(tFIFO_BUFFER *pFifo, size_t size)
 {
-
-
     bool was_writable = false;
 
     //CritScope cs(&crit_);

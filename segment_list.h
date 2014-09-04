@@ -100,8 +100,10 @@ extern U32 SEGMENT_LIST_size(tMI_DLIST *pDList);
 extern tMI_DLNODE *SEGMENT_LIST_erase(tMI_DLIST *pDList, tMI_DLNODE *pNode);
 
 // inserting new elements before the element at the specified position
-extern void SEGMENT_LIST_insert(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2);
+extern void SEGMENT_LIST_insertBefore(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2);
+extern void SEGMENT_LIST_insertAfter(tMI_DLIST *pDList, tMI_DLNODE *pNode, tMI_DLNODE *pNode2);
 
+extern void SEGMENT_LIST_Dump(tMI_DLIST *pDList);
 /*** PUBLIC FUNCTION PROTOTYPES **********************************************/
 
 

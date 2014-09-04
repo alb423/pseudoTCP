@@ -325,8 +325,15 @@ void PTCP_Destroy(tPseudoTcp *pPTCP)
             FIFO_Destroy(pPTCP->m_sbuf);
         }
 
-        // TODO: if there are data in m_rlist or m_slist, we should remove them here
+#if 0
+        free(pPTCP->m_rlist);
+        free(pPTCP->m_slist);
+#else
+        // If there are data(memory leakage) still in m_rlist or m_slist, we should remove them here
         if(pPTCP->m_rlist) {
+            if(pPTCP->m_rlist->count!=0) {
+                SEGMENT_LIST_Dump(pPTCP->m_rlist);
+            }
             while(pPTCP->m_rlist->count!=0) {
                 tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_rlist);
                 if(vpRSSeg) {
@@ -337,6 +344,11 @@ void PTCP_Destroy(tPseudoTcp *pPTCP)
             free(pPTCP->m_rlist);
         }
         if(pPTCP->m_slist) {
+            if(pPTCP->m_slist->count!=0) {
+                SEGMENT_LIST_Dump(pPTCP->m_slist);
+                tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_slist);
+                printf("==> seq=%d len=%d xmit=%d\n", vpRSSeg->seq, vpRSSeg->len, vpRSSeg->xmit);
+            }
             while(pPTCP->m_slist->count!=0) {
                 tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_slist);
                 if(vpRSSeg) {
@@ -346,6 +358,7 @@ void PTCP_Destroy(tPseudoTcp *pPTCP)
             }
             free(pPTCP->m_slist);
         }
+#endif
         free(pPTCP);
     }
 }
@@ -634,6 +647,7 @@ U32 PTCP_Queue(tPseudoTcp *pPTCP, const U8* data, U32 len, bool bCtrl)
         ASSERT(!bCtrl);
         len = (U32)(available_space);
     }
+    
     // We can concatenate data if the last segment is the same type
     // (control v. regular data), and has not been transmitted yet
     if (!SEGMENT_LIST_empty(pPTCP->m_slist) && ((SEGMENT_LIST_back(pPTCP->m_slist))->bCtrl == bCtrl) &&
@@ -650,6 +664,7 @@ U32 PTCP_Queue(tPseudoTcp *pPTCP, const U8* data, U32 len, bool bCtrl)
         pRSSeg->len = len;
         pRSSeg->bCtrl = bCtrl;
         SEGMENT_LIST_push_back(pPTCP->m_slist, &(pRSSeg->DLNode));
+        //printf("PTCP_Queue &(pRSSeg->DLNode)=0x%08x\n", (U32)&(pRSSeg->DLNode));
     }
     size_t written = 0;
     tStreamResult result = FIFO_Write(pPTCP->m_sbuf, data, len, &written);
@@ -836,6 +851,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 
             // TCP options are in the remainder of the payload after CTL_CONNECT.
             parseOptions(pPTCP, &pSeg->data[1], pSeg->len - 1);
+            
             if (pPTCP->m_state == TCP_LISTEN) {
                 pPTCP->m_state = TCP_SYN_RECEIVED;
                 LOG(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_RECEIVED");
@@ -890,7 +906,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
             }
         }
 
-        pPTCP->m_snd_wnd = (U32)((pSeg->wnd) << pPTCP->m_swnd_scale);
+        pPTCP->m_snd_wnd = (U32)(pSeg->wnd) << pPTCP->m_swnd_scale;
 
         U32 nAcked = pSeg->ack - pPTCP->m_snd_una;
         pPTCP->m_snd_una = pSeg->ack;
@@ -916,8 +932,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
                     }
                     nFree -= vpRSSegment->len;
                     SEGMENT_LIST_pop_front(pPTCP->m_slist);
-                    // 20140827
-                    //free(vpRSSegment);
+                    free(vpRSSegment);
                 }
             } else {
                 break;
@@ -953,7 +968,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
         }
     } else if (pSeg->ack == pPTCP->m_snd_una) {
         // !?! Note, tcp says don't do this... but otherwise how does a closed window become open?
-        pPTCP->m_snd_wnd = (U32)((pSeg->wnd) << pPTCP->m_swnd_scale);
+        pPTCP->m_snd_wnd = (U32)(pSeg->wnd) << pPTCP->m_swnd_scale;
 
         // Check duplicate acks
         if (pSeg->len > 0) {
@@ -1086,8 +1101,9 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
                 bNewData = true;
 
                 //RList::iterator it = pPTCP->m_rlist.begin();
-                tRSSegment *it = SEGMENT_LIST_begin(pPTCP->m_rlist);
                 //while ((it != SEGMENT_LIST_end(pPTCP->m_rlist)) && (it->seq <= pPTCP->m_rcv_nxt)) {
+                
+                tRSSegment *it = SEGMENT_LIST_begin(pPTCP->m_rlist);
                 while ((it != NULL) && (it->seq <= pPTCP->m_rcv_nxt)) {
                     if (it->seq + it->len > pPTCP->m_rcv_nxt) {
                         sflags = sfImmediateAck; // (Fast Recovery)
@@ -1105,10 +1121,11 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 
                     //it = pPTCP->m_rlist.erase(it);
                     tMI_DLNODE *vpNode = SEGMENT_LIST_erase(pPTCP->m_rlist, &it->DLNode);
+                    free(it);
                     if(vpNode==NULL) {
                         break;
                     }
-                    free(it);
+
                     it = MI_NODEENTRY(vpNode, tRSSegment, DLNode);
                 }
             } else {
@@ -1120,6 +1137,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 
                 //RSegment rseg;
                 tRSSegment *pRSSeg = malloc(sizeof(tRSSegment));
+                memset(pRSSeg, 0, sizeof(tRSSegment));
                 pRSSeg->seq = pSeg->seq;
                 pRSSeg->len = pSeg->len;
                 //RList::iterator it = pPTCP->m_rlist.begin();
@@ -1132,15 +1150,18 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 
                 //pPTCP->m_rlist.insert(it, rseg);
                 if(it!=NULL) {
-                    SEGMENT_LIST_insert(pPTCP->m_rlist, &it->DLNode, &pRSSeg->DLNode);
-                } else {
-                    SEGMENT_LIST_push_back(pPTCP->m_rlist, &pRSSeg->DLNode);
+                    SEGMENT_LIST_insertBefore(pPTCP->m_rlist, &it->DLNode, &pRSSeg->DLNode);
+                    //SEGMENT_LIST_insertAfter(pPTCP->m_rlist, &it->DLNode, &pRSSeg->DLNode);
                 }
+//                else {
+//                    ASSERT(it!=NULL);
+//                    //SEGMENT_LIST_push_back(pPTCP->m_rlist, &pRSSeg->DLNode);
+//                }
             }
         }
     }
 
-    //LOG(LS_INFO, "process done!!");
+    LOG(LS_INFO, "process done!!");
     attemptSend(pPTCP, sflags);
 
     // If we have new data, notify the user
@@ -1172,7 +1193,6 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now)
         //LOG(LS_INFO, "while (true)");
         U32 seq = seg->seq;
         U8 flags = (seg->bCtrl ? FLAG_CTL : 0);
-        // TODO: seg->seq - pPTCP->m_snd_una may < 0, then cause error
         //ASSERT(seg->seq >= pPTCP->m_snd_una);
         tWriteResult wres = PTCP_Packet( pPTCP,
                                          seq,
@@ -1225,11 +1245,12 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now)
         pRSSeg->xmit = seg->xmit;
         seg->len = nTransmit;
 
+        ASSERT(pRSSeg->xmit==0);
         //SList::iterator next = seg;
         //pPTCP->m_slist.insert(++next, subseg);
 
         tRSSegment *next = seg;
-        SEGMENT_LIST_insert(pPTCP->m_slist, &next->DLNode, &pRSSeg->DLNode);
+        SEGMENT_LIST_insertAfter(pPTCP->m_slist, &next->DLNode, &pRSSeg->DLNode);
 
     }
 
@@ -1322,8 +1343,15 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
         // Find the next segment to transmit
         //SList::iterator it = pPTCP->m_slist.begin();
         tRSSegment *it = SEGMENT_LIST_begin(pPTCP->m_slist);
-        //printf("pPTCP->m_slist->count = %d\n", pPTCP->m_slist->count);
+        
+#if _DEBUGMSG >= _DBG_VERBOSE
+        char pTmpBuf[1024]= {0};
+        sprintf(pTmpBuf, "%s pPTCP->m_slist->count = %d\n",__func__ ,pPTCP->m_slist->count);
+        LOG(LS_VERBOSE, pTmpBuf);
+#endif // _DEBUGMSG
+
         if(it) {
+            SEGMENT_LIST_Dump(pPTCP->m_slist);
             while (it->xmit > 0) {
                 //LOG(LS_INFO, "it->xmit > 0");
                 //++it;
@@ -1331,12 +1359,11 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
                 if(it->DLNode.next != NULL) {
                     it = MI_NODEENTRY(it->DLNode.next, tRSSegment, DLNode);
                 } else {
+                    printf("it->DLNode=0x%08x\n", (U32)&(it->DLNode));
                     ASSERT(it->DLNode.next != NULL);
                     //printf("it->DLNode.next == NULL\n");
                     break;
                 }
-                // TODO: below will assert sometimes, but if we mark it, it may into infinite loop
-                //printf("it=0x%08x\n", (U32)it);
                 ASSERT(it != NULL);
             }
             //SList::iterator seg = it;
@@ -1345,7 +1372,10 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
             // If the segment is too large, break it into two
             if (seg->len > nAvailable) {
                 //SSegment subseg(seg->seq + nAvailable, seg->len - nAvailable, seg->bCtrl);
+                //printf("seg->len(%d) > nAvailable(%d)\n", seg->len, nAvailable);
+                //printf("tRSSegment *pRSSeg = malloc(sizeof(tRSSegment));\n");
                 tRSSegment *pRSSeg = malloc(sizeof(tRSSegment));
+                memset(pRSSeg, 0, sizeof(tRSSegment));
                 pRSSeg->seq = seg->seq + nAvailable;
                 pRSSeg->len = seg->len - nAvailable;
                 pRSSeg->bCtrl = seg->bCtrl;
@@ -1353,7 +1383,8 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
                 seg->len = nAvailable;
 
                 //pPTCP->m_slist.insert(++it, subseg);
-                SEGMENT_LIST_insert(pPTCP->m_slist, &it->DLNode, &pRSSeg->DLNode);
+                //SEGMENT_LIST_insertBefore(pPTCP->m_slist, &it->DLNode, &pRSSeg->DLNode);
+                SEGMENT_LIST_insertAfter(pPTCP->m_slist, &it->DLNode, &pRSSeg->DLNode);
                 //printf("pPTCP->m_slist->count = %d\n", pPTCP->m_slist->count);
             }
 
@@ -1448,7 +1479,7 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len)
         U8 val;
     } tSet;
 
-    tMI_DLIST options_specified;
+    tMI_DLIST options_specified={0};
 
     // See http://www.freesoft.org/CIE/Course/Section4/8.htm for
     // parsing the options list.
@@ -1457,7 +1488,7 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len)
     U8 *buf = (U8 *)data;
     vLength = len;
 
-    // TODO: remove medump
+    // if needed, enable below to dump memory
     /*
     {
        if(vLength==1)
@@ -1466,9 +1497,9 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len)
           printf("Options: %02x %02x\n", buf[0], buf[1]);
        if(vLength==3)
           printf("Options: %02x %02x %02x\n", buf[0], buf[1], buf[2]);
-
     }
     */
+    
     while (vLength) {
         U8 kind = TCP_OPT_EOL;
         kind = (U8) buf[vIndex++];
@@ -1522,7 +1553,19 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len)
         vpNode = vpNode->next;
     }
 
-
+    // The set won't be used, we should free it
+    vpNode = MI_DlFirst(&options_specified);
+    while(vpNode!=NULL) {
+        vpSet = MI_NODEENTRY(vpNode, tSet, DLNode);
+        if(vpSet) {
+            vpNode = vpNode->next;
+            free(vpSet);
+        }
+        else {
+            ASSERT(vpSet!=NULL);
+        }
+    }
+    
     //if (options_specified.find(TCP_OPT_WND_SCALE) == options_specified.end()) {
     if(bFind==false) {
         LOG(LS_INFO, "Peer doesn't support window scaling");

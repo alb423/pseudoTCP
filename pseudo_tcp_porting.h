@@ -44,8 +44,9 @@ extern "C" {
 #define LS_INFO      3
 #define LS_VERBOSE   4
 #define LS_SENSITIVE 5
-#define LS_LEVEL LS_VERBOSE
-
+//#define LS_LEVEL LS_VERBOSE
+#define LS_LEVEL LS_ERROR
+    
 // if(sev <= LS_ERROR) printf("%s, %s:%d, %s\n", __FILE__, __FUNCTION__, __LINE__, x);
 #define LOG(sev,x) \
 if(sev <= LS_LEVEL) printf("%s:%d, %s\n",__FUNCTION__, __LINE__, x);

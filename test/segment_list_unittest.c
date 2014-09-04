@@ -362,8 +362,8 @@ void Test_SegmentList_s02(void)
     SEGMENT_LIST_push_back(&vDList, &vTCtxt[2].DLNode);
     SEGMENT_LIST_push_back(&vDList, &vTCtxt[4].DLNode);
 
-    SEGMENT_LIST_insert(&vDList, &vTCtxt[0].DLNode, &vTCtxt[1].DLNode);
-    SEGMENT_LIST_insert(&vDList, &vTCtxt[2].DLNode, &vTCtxt[3].DLNode);
+    SEGMENT_LIST_insertAfter(&vDList, &vTCtxt[0].DLNode, &vTCtxt[1].DLNode);
+    SEGMENT_LIST_insertAfter(&vDList, &vTCtxt[2].DLNode, &vTCtxt[3].DLNode);
 
     vpTCtxt = SEGMENT_LIST_back(&vDList);
     CU_ASSERT_EQUAL(vpTCtxt->seq, 4);
@@ -411,8 +411,8 @@ void Test_SegmentList_s03(void)
     SEGMENT_LIST_push_back(&vDList, &pTCtxt[2]->DLNode);
     SEGMENT_LIST_push_back(&vDList, &pTCtxt[4]->DLNode);
 
-    SEGMENT_LIST_insert(&vDList, &pTCtxt[0]->DLNode, &pTCtxt[1]->DLNode);
-    SEGMENT_LIST_insert(&vDList, &pTCtxt[2]->DLNode, &pTCtxt[3]->DLNode);
+    SEGMENT_LIST_insertAfter(&vDList, &pTCtxt[0]->DLNode, &pTCtxt[1]->DLNode);
+    SEGMENT_LIST_insertAfter(&vDList, &pTCtxt[2]->DLNode, &pTCtxt[3]->DLNode);
 
     vpTCtxt = SEGMENT_LIST_back(&vDList);
     CU_ASSERT_EQUAL(vpTCtxt->seq, 4);

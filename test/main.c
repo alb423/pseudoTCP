@@ -29,7 +29,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <unistd.h>
+    
 /*** PROJECT INCLUDES ********************************************************/
 #include <CUnit/CUnit.h>
 #include <CUnit/Console.h>
@@ -64,6 +65,7 @@ static int testInit(void)
 }
 static int testClean(void)
 {
+    //sleep(1);
     return 0;
 }
 void testAssertTrue(void);
@@ -71,7 +73,6 @@ void testAssertTrue(void);
 int main(int argc, char **argv)
 {
     CU_pSuite pSuite;
-    printf("test\n");
     CU_initialize_registry();
 
 #if 0
@@ -98,13 +99,16 @@ int main(int argc, char **argv)
     pSuite = CU_add_suite("Test PseudoTCP", testInit, testClean);
     //CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_01_01);
 
-#if 1
     // Basic end-to-end data transfer tests
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSend);
 
-#else
+    
+#if 0
+    // Test ok
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSend);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithDelay);
+    
+    // Still not test
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithLoss); // lose handle is not correct
 
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithDelayAndLoss);
