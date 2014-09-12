@@ -336,10 +336,10 @@ void PTCP_Destroy(tPseudoTcp *pPTCP)
             }
             while(pPTCP->m_rlist->count!=0) {
                 tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_rlist);
+                SEGMENT_LIST_pop_front(pPTCP->m_rlist);
                 if(vpRSSeg) {
                     free(vpRSSeg);
                 }
-                SEGMENT_LIST_pop_front(pPTCP->m_rlist);
             }
             free(pPTCP->m_rlist);
         }

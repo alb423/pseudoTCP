@@ -49,7 +49,8 @@ extern "C" {
     
 // if(sev <= LS_ERROR) printf("%s, %s:%d, %s\n", __FILE__, __FUNCTION__, __LINE__, x);
 #define LOG(sev,x) \
-if(sev <= LS_LEVEL) printf("%s:%d, %s\n",__FUNCTION__, __LINE__, x);
+    if(sev <= LS_LEVEL) printf("%ld  %s:%d , %s \n", time(NULL), __FUNCTION__, __LINE__, x);
+    
 
 #define LOG_ARG(sev,x) \
     if(sev <= LS_LEVEL) printf("%s:%d, %s 0x%08x\n",__FUNCTION__, __LINE__, #x, (U32)x);

@@ -655,6 +655,7 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
             if(pMQueue->msgPeek.pData) {
                 free(pMQueue->msgPeek.pData->pVal);
                 free(pMQueue->msgPeek.pData);
+                pMQueue->msgPeek.pData = NULL;
             }
         }
         pMQueue->fPeekKeep = false;
@@ -680,6 +681,7 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
                             free(pMsg->pData->pVal);
                         }
                         free(pMsg->pData);
+                        pMsg->pData = NULL;
                     }
                 }
                 
@@ -766,6 +768,10 @@ bool MQueue_ProcessMessages(tMessageQueue *pIn, int cmsLoop)
 
     while (true) {
         tMessage msg;
+        memset(&msg, 0, sizeof(tMessage));
+
+//        tMessage *pMsg = malloc(sizeof(tMessage));
+//        memset(pMsg, 0, sizeof(tMessage));
         //LOG(LS_INFO, "MQueue_Get");
         if (!MQueue_Get(pIn, &msg, cmsNext, true)) {
             //LOG(LS_INFO, "return");
@@ -992,6 +998,10 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                             PQueue_Pop(&pIn->dmsgq);
                             free(pDelayMsg);
                         }
+                        else
+                        {
+                            ASSERT(pDelayMsg!=NULL);
+                        }
                     }
                 }
                 // Pull a message off the message queue, if available.
@@ -1007,7 +1017,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                         *pmsg = *pTmpMsg;
                         MList_Pop_Front(&pIn->msgq);
                         // TODO: check here
-                        //free(pTmpMsg);
+                        free(pTmpMsg);
                     }
                 }
 
@@ -1036,11 +1046,11 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                         free(pmsg->pData->pVal);
                     }
                     free(pmsg->pData);
+                    pmsg->pData = NULL;
                 }
                 //*pmsg = Message();
                 //memset(pmsg, 0, sizeof(*pmsg));
                 memset(pmsg, 0, sizeof(tMessage));
-                free(pmsg);
                 continue;
             }
             

@@ -112,7 +112,7 @@ tFIFO_BUFFER * FIFO_Create(size_t vSize, tFIFO_CB pReadCB, tFIFO_CB pWriteCB)
 
             pthread_mutexattr_t mutex_attribute;
             pthread_mutexattr_init(&mutex_attribute);
-            pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_ERRORCHECK);
+            pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_RECURSIVE);
             pthread_mutex_init(&vpPtr->mutex, &mutex_attribute);
             pthread_mutexattr_destroy(&mutex_attribute);
 
