@@ -35,8 +35,15 @@ extern "C" {
 #include "segment_list.h"
 
 /*** MACROS ******************************************************************/
+    
+// For Debug only
+#define PTCP_LOCAL  0
+#define PTCP_REMOTE 1
+#define PTCP_STR_LOCAL  "LOCAL"
+#define PTCP_STR_REMOTE "REMOTE"
+#define PTCP_WHOAMI(x) ({x==PTCP_REMOTE ?  PTCP_STR_REMOTE: PTCP_STR_LOCAL;})
 
-
+    
 /*** GLOBAL TYPES DEFINITIONS ************************************************/
 typedef enum {
     TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECEIVED, TCP_ESTABLISHED, TCP_CLOSED
@@ -139,10 +146,12 @@ typedef struct tPseudoTcp {
     tOnTcpClosedCB       OnTcpClosed;
     tTcpWritePacketCB    TcpWritePacket;
 
+    // Test only
+    U8 tcpId;
 } tPseudoTcp;
 
 /*** PUBLIC FUNCTION PROTOTYPES **********************************************/
-tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv);
+tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, tFIFO_CB *pNotifyReadCB, tFIFO_CB *pNotifyWriteCB, U32 conv);
 void PTCP_Destroy(tPseudoTcp *pPTCP);
 
 void PTCP_GetOption(tPseudoTcp *pPTCP, Option opt, int* value);

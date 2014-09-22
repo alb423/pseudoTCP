@@ -169,8 +169,10 @@ tMI_DLNODE *SEGMENT_LIST_erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
             return NULL;
 
         vpNode = MI_DlNth(pDList, vIndex+1);
-        if(vpNode == NULL)
-            return NULL;
+        if(vpNode == NULL) {
+            // This is the last node in list
+            // return NULL;
+        }
 
         MI_DlDelete(pDList, pNode);
 

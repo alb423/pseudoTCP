@@ -43,8 +43,8 @@ extern "C" {
 #define _DBG_NONE     0
 #define _DBG_NORMAL   1
 #define _DBG_VERBOSE  2
-#define _DEBUGMSG _DBG_NONE
-
+//#define _DEBUGMSG _DBG_NONE
+#define _DEBUGMSG _DBG_VERBOSE
 
 // This is used to avoid warning message "unused variable"
 #ifndef UNUSED
@@ -133,8 +133,12 @@ const U32 DEFAULT_SND_BUF_SIZE = 90 * 1024;
 
 const U32 HEADER_SIZE = 24;
 // HEADER_SIZE + UDP_HEADER_SIZE + IP_HEADER_SIZE + UDPTUNNEL_HEADER_SIZE;
-const U32 PACKET_OVERHEAD = 24 + 8 + 20 + 5;
 
+// TODO: fix me
+//const U32 PACKET_OVERHEAD = 24 + 8 + 20 + 5;
+// The definition of libjingle
+const U32 PACKET_OVERHEAD = 24 + 8 + 20 + 64;
+    
 const U32 MIN_RTO   =   250; // 250 ms (RFC1122, Sec 4.2.3.1 "fractions of a second")
 const U32 DEF_RTO   =  3000; // 3 seconds (RFC1122, Sec 4.2.3.1)
 const U32 MAX_RTO   = 60000; // 60 seconds
@@ -213,21 +217,6 @@ U32 bound(U32 lower, U32 middle, U32 upper)
     return MIN(MAX(lower, middle), upper);
 }
 
-// TODO
-void NotifyReadCB(int vIn)
-{
-    //printf("NotifyReadCB\n");
-    // Notify user can read data now;
-    // if we didn't have any data to read before, and now we do, post an event
-}
-
-void NotifyWriteCB(int vIn)
-{
-    //bprintf("NotifyWriteCB\n");
-    // Notify user can write data now;
-    // if we(FIFO) were full before, and now we're not, post an event
-}
-
 //////////////////////////////////////////////////////////////////////
 // PseudoTcp
 //////////////////////////////////////////////////////////////////////
@@ -238,7 +227,7 @@ U32 PTCP_Now()
 }
 
 
-tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv)
+tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, tFIFO_CB *pNotifyReadCB, tFIFO_CB *pNotifyWriteCB, U32 conv)
 {
 
     tPseudoTcp *pPTCP = NULL;
@@ -262,8 +251,8 @@ tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, U32 conv)
 
     pPTCP->m_rbuf_len = DEFAULT_RCV_BUF_SIZE;
     pPTCP->m_sbuf_len = DEFAULT_SND_BUF_SIZE;
-    pPTCP->m_rbuf = FIFO_Create(pPTCP->m_rbuf_len, NotifyReadCB, NotifyWriteCB);
-    pPTCP->m_sbuf = FIFO_Create(pPTCP->m_sbuf_len, NotifyReadCB, NotifyWriteCB);
+    pPTCP->m_rbuf = FIFO_Create(pPTCP->m_rbuf_len, pNotifyReadCB, pNotifyWriteCB);
+    pPTCP->m_sbuf = FIFO_Create(pPTCP->m_sbuf_len, pNotifyReadCB, pNotifyWriteCB);
 
     pPTCP->m_rlist = malloc(sizeof(tMI_DLIST));
     pPTCP->m_slist = malloc(sizeof(tMI_DLIST));
@@ -372,8 +361,11 @@ int PTCP_Connect(tPseudoTcp *pPTCP)
     }
 
     pPTCP->m_state = TCP_SYN_SENT;
-    LOG(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_SENT");
-
+    //LOG_F(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_SENT");
+    char pTmp[1024]= {0};
+    sprintf(pTmp, "%s: State: TCP_LISTEN -> TCP_SYN_SENT", PTCP_WHOAMI(pPTCP->tcpId));
+    LOG_F(LS_VERBOSE, pTmp);
+    
     queueConnectMessage(pPTCP);
     attemptSend(pPTCP, sfNone);
 
@@ -398,18 +390,25 @@ void PTCP_NotifyClock(tPseudoTcp *pPTCP, U32 now)
         return;
 
     // Check if it's time to retransmit a segment
+    char pTmp[1024]= {0};
+    sprintf(pTmp, "%s: m_rto_base=%d, TimeDiff=%d now=%d m_rto_base=%d, m_rx_rto=%d",\
+            PTCP_WHOAMI(pPTCP->tcpId), pPTCP->m_rto_base, TimeDiff(pPTCP->m_rto_base + pPTCP->m_rx_rto, now), now, pPTCP->m_rto_base, pPTCP->m_rx_rto);
+    LOG_F(LS_VERBOSE, pTmp);
+
     if (pPTCP->m_rto_base && (TimeDiff(pPTCP->m_rto_base + pPTCP->m_rx_rto, now) <= 0)) {
         if (SEGMENT_LIST_empty(pPTCP->m_slist)) {
             ASSERT(false);
         } else {
             // Note: (pPTCP->m_slist.front().xmit == 0)) {
             // retransmit segments
-#if _DEBUGMSG >= _DBG_NORMAL
+//#if _DEBUGMSG >= _DBG_NORMAL
+#if 1
             char pTmp[1024]= {0};
-            sprintf(pTmp, "timeout retransmit (rto: %d) (rto_base: %d) (now: %d) (dup_acks: %d)\n",\
-                    pPTCP->m_rx_rto, pPTCP->m_rto_base, now, (unsigned)pPTCP->m_dup_acks);
-            LOG(LS_VERBOSE, pTmp);
+            sprintf(pTmp, "%s: timeout retransmit (rto: %d) (rto_base: %d) (now: %d) (dup_acks: %d)",\
+                    PTCP_WHOAMI(pPTCP->tcpId), pPTCP->m_rx_rto, pPTCP->m_rto_base, now, (unsigned)pPTCP->m_dup_acks);
+            LOG_F(LS_VERBOSE, pTmp);
 #endif // _DEBUGMSG
+            
             if (!transmit(pPTCP, SEGMENT_LIST_begin(pPTCP->m_slist), now)) {
                 closedown(pPTCP, ECONNABORTED);
                 return;
@@ -417,7 +416,7 @@ void PTCP_NotifyClock(tPseudoTcp *pPTCP, U32 now)
 
             U32 nInFlight = pPTCP->m_snd_nxt - pPTCP->m_snd_una;
             pPTCP->m_ssthresh = MAX(nInFlight / 2, 2 * pPTCP->m_mss);
-            //LOG(LS_INFO) << "pPTCP->m_ssthresh: " << pPTCP->m_ssthresh << "  nInFlight: " << nInFlight << "  pPTCP->m_mss: " << pPTCP->m_mss;
+            //LOG_F(LS_INFO) << "pPTCP->m_ssthresh: " << pPTCP->m_ssthresh << "  nInFlight: " << nInFlight << "  pPTCP->m_mss: " << pPTCP->m_mss;
             pPTCP->m_cwnd = pPTCP->m_mss;
 
             // Back off retransmit timer.  Note: the limit is lower when connecting.
@@ -465,13 +464,17 @@ void PTCP_NotifyClock(tPseudoTcp *pPTCP, U32 now)
 
 bool PTCP_NotifyPacket(tPseudoTcp *pPTCP, const U8* buffer, size_t len)
 {
-    //LOG(LS_INFO, "PTCP_NotifyPacket In");
+    char pTmp[1024]= {0};
+    sprintf(pTmp, "%s: PTCP_NotifyPacket In", PTCP_WHOAMI(pPTCP->tcpId));
+    LOG_F(LS_VERBOSE, pTmp);
+    
+    //LOG_F(LS_INFO, "PTCP_NotifyPacket In");
     ASSERT(pPTCP!=NULL);
     if (len > MAX_PACKET) {
-        LOG(LS_INFO, "PTCP_Packet too large");
+        LOG_F(LS_INFO, "PTCP_Packet too large");
         return false;
     }
-    //LOG(LS_INFO, "PTCP_NotifyPacket Out");
+    //LOG_F(LS_INFO, "PTCP_NotifyPacket Out");
     return PTCP_Parse(pPTCP, (const U8 *)buffer, (U32)len);
 }
 
@@ -592,7 +595,7 @@ int PTCP_Recv(tPseudoTcp *pPTCP, U8* buffer, size_t len)
         pPTCP->m_rcv_wnd = (U32)(available_space);
 
         if (bWasClosed) {
-            LOG(LS_INFO, "bWasClosed");
+            LOG_F(LS_INFO, "bWasClosed");
             attemptSend(pPTCP, sfImmediateAck);
         }
     }
@@ -619,7 +622,11 @@ int PTCP_Send(tPseudoTcp *pPTCP, const U8* buffer, size_t len)
     }
 
     int written = PTCP_Queue(pPTCP, buffer, (U32)len, false);
-    LOG(LS_INFO, "PTCP_Send");
+    //LOG_F(LS_INFO, "PTCP_Send");
+    char pTmp[1024]= {0};
+    sprintf(pTmp, "%s: PTCP_Send", PTCP_WHOAMI(pPTCP->tcpId));
+    LOG_F(LS_VERBOSE, pTmp);
+    
     attemptSend(pPTCP, sfNone);
     return written;
 }
@@ -675,7 +682,10 @@ U32 PTCP_Queue(tPseudoTcp *pPTCP, const U8* data, U32 len, bool bCtrl)
 
 tWriteResult PTCP_Packet(tPseudoTcp *pPTCP, U32 seq, U8 flags, U32 offset, U32 len)
 {
-    //LOG(LS_INFO, "PTCP_Packet");
+    char pTmp[1024]= {0};
+    sprintf(pTmp, "%s: PTCP_Packet size(%d)", PTCP_WHOAMI(pPTCP->tcpId), len);
+    LOG_F(LS_VERBOSE, pTmp);
+    //LOG_F(LS_INFO, "PTCP_Packet");
     ASSERT(pPTCP!=NULL);
     ASSERT(HEADER_SIZE + len <= MAX_PACKET);
     U32 now = PTCP_Now();
@@ -711,7 +721,7 @@ tWriteResult PTCP_Packet(tPseudoTcp *pPTCP, U32 seq, U8 flags, U32 offset, U32 l
 
 #if _DEBUGMSG >= _DBG_VERBOSE
     char pTmpBuf[1024]= {0};
-    sprintf(pTmpBuf, "\n<-- <CONV=%d><FLG=%d><SEQ=%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>",\
+    sprintf(pTmpBuf, "<-- <CONV=%d><FLG=%d><SEQ=%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>",\
             pPTCP->m_conv, (unsigned)flags, (seq + len), pPTCP->m_rcv_nxt, pPTCP->m_rcv_wnd, (now % 10000), (pPTCP->m_ts_recent % 10000), len);
     LOG(LS_VERBOSE, pTmpBuf);
 #endif // _DEBUGMSG
@@ -757,7 +767,7 @@ bool PTCP_Parse(tPseudoTcp *pPTCP, const U8* buffer, U32 size)
 
 #if _DEBUGMSG >= _DBG_VERBOSE
     char pTmp[1024] = {0};
-    sprintf(pTmp, "\n--> <CONV=%d><FLG=%d><SEQ=%d:%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>", \
+    sprintf(pTmp, "--> <CONV=%d><FLG=%d><SEQ=%d:%d><ACK=%d><WND=%d><TS=%d><TSR=%d><LEN=%d>", \
             seg.conv, (unsigned)seg.flags, seg.seq, seg.seq + seg.len, seg.ack, seg.wnd,\
             (seg.tsval % 10000), (seg.tsecr % 10000), seg.len);
     LOG(LS_INFO, pTmp);
@@ -812,7 +822,7 @@ bool clock_check(tPseudoTcp *pPTCP, U32 now, long  *pTimeout)
 
 bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 {
-    //LOG(LS_INFO, "PTCP_Process");
+    //LOG_F(LS_INFO, "PTCP_Process");
     ASSERT(pPTCP!=NULL);
     char pTmp[1024]= {0};
     // If this is the wrong conversation, send a reset!?! (with the correct conversation?)
@@ -820,7 +830,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
         //if ((seg.flags & FLAG_RST) == 0) {
         //  PTCP_Packet(tcb, seg.ack, 0, FLAG_RST, 0, 0);
         //}
-        LOG(LS_INFO, "wrong conversation");
+        LOG_F(LS_INFO, "wrong conversation");
         return false;
     }
 
@@ -830,7 +840,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 
     if (pPTCP->m_state == TCP_CLOSED) {
         // !?! send reset?
-        LOG(LS_INFO, "closed");
+        LOG_F(LS_INFO, "closed");
         return false;
     }
 
@@ -844,7 +854,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
     bool bConnect = false;
     if (pSeg->flags & FLAG_CTL) {
         if (pSeg->len == 0) {
-            LOG(LS_INFO, "Missing control code");
+            LOG_F(LS_INFO, "Missing control code");
             return false;
         } else if (pSeg->data[0] == CTL_CONNECT) {
             bConnect = true;
@@ -854,12 +864,18 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
             
             if (pPTCP->m_state == TCP_LISTEN) {
                 pPTCP->m_state = TCP_SYN_RECEIVED;
-                LOG(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_RECEIVED");
+                //LOG_F(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_RECEIVED");
+                char pTmp[1024]= {0};
+                sprintf(pTmp, "%s: State: TCP_LISTEN -> TCP_SYN_RECEIVED", PTCP_WHOAMI(pPTCP->tcpId));
+                LOG_F(LS_VERBOSE, pTmp);
                 //pPTCP->associate(addr);
                 queueConnectMessage(pPTCP);
             } else if (pPTCP->m_state == TCP_SYN_SENT) {
                 pPTCP->m_state = TCP_ESTABLISHED;
-                LOG(LS_INFO, "State: TCP_SYN_SENT -> TCP_ESTABLISHED");
+                //LOG_F(LS_INFO, "State: TCP_SYN_SENT -> TCP_ESTABLISHED");
+                char pTmp[1024]= {0};
+                sprintf(pTmp, "%s: State: TCP_SYN_SENT -> TCP_ESTABLISHED", PTCP_WHOAMI(pPTCP->tcpId));
+                LOG_F(LS_VERBOSE, pTmp);
                 adjustMTU(pPTCP);
                 //pPTCP->OnTcpOpen(this);
                 if(pPTCP->OnTcpOpen) {
@@ -869,7 +885,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
             }
         } else {
             sprintf(pTmp, "Unknown control code: %d", pSeg->data[0]);
-            LOG(LS_ERROR, pTmp);
+            LOG_F(LS_ERROR, pTmp);
             return false;
         }
     }
@@ -912,7 +928,13 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
         pPTCP->m_snd_una = pSeg->ack;
 
         pPTCP->m_rto_base = (pPTCP->m_snd_una == pPTCP->m_snd_nxt) ? 0 : now;
-
+        
+        //TODO: check here
+        if ((!pPTCP->m_rto_base) || (nAcked ==0))
+        {
+            LOG_F(LS_VERBOSE, "check pPTCP->m_rto_base\n");
+        }
+            
         //pPTCP->m_sbuf.ConsumeReadData(nAcked);
         FIFO_ConsumeReadData(pPTCP->m_sbuf, nAcked);
 
@@ -944,12 +966,12 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
                 U32 nInFlight = pPTCP->m_snd_nxt - pPTCP->m_snd_una;
                 pPTCP->m_cwnd = MIN(pPTCP->m_ssthresh, nInFlight + pPTCP->m_mss); // (Fast Retransmit)
 #if _DEBUGMSG >= _DBG_NORMAL
-                LOG(LS_INFO, "exit recovery");
+                LOG_F(LS_INFO, "exit recovery");
 #endif // _DEBUGMSG
                 pPTCP->m_dup_acks = 0;
             } else {
 #if _DEBUGMSG >= _DBG_NORMAL
-                LOG(LS_INFO, "recovery retransmit");
+                LOG_F(LS_INFO, "recovery retransmit");
 #endif // _DEBUGMSG
                 if (!transmit(pPTCP, SEGMENT_LIST_begin(pPTCP->m_slist), now)) {
                     closedown(pPTCP, ECONNABORTED);
@@ -977,8 +999,8 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
             pPTCP->m_dup_acks += 1;
             if (pPTCP->m_dup_acks == 3) { // (Fast Retransmit)
 #if _DEBUGMSG >= _DBG_NORMAL
-                LOG(LS_INFO, "enter recovery");
-                LOG(LS_INFO, "recovery retransmit");
+                LOG_F(LS_INFO, "enter recovery");
+                LOG_F(LS_INFO, "recovery retransmit");
 #endif // _DEBUGMSG
                 if (!transmit(pPTCP, SEGMENT_LIST_begin(pPTCP->m_slist), now)) {
                     closedown(pPTCP, ECONNABORTED);
@@ -987,7 +1009,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
                 pPTCP->m_recover = pPTCP->m_snd_nxt;
                 U32 nInFlight = pPTCP->m_snd_nxt - pPTCP->m_snd_una;
                 pPTCP->m_ssthresh = MAX(nInFlight / 2, 2 * pPTCP->m_mss);
-                //LOG(LS_INFO) << "pPTCP->m_ssthresh: " << pPTCP->m_ssthresh << "  nInFlight: " << nInFlight << "  pPTCP->m_mss: " << pPTCP->m_mss;
+                //LOG_F(LS_INFO) << "pPTCP->m_ssthresh: " << pPTCP->m_ssthresh << "  nInFlight: " << nInFlight << "  pPTCP->m_mss: " << pPTCP->m_mss;
                 pPTCP->m_cwnd = pPTCP->m_ssthresh + 3 * pPTCP->m_mss;
             } else if (pPTCP->m_dup_acks > 3) {
                 pPTCP->m_cwnd += pPTCP->m_mss;
@@ -1000,7 +1022,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
     // !?! A bit hacky
     if ((pPTCP->m_state == TCP_SYN_RECEIVED) && !bConnect) {
         pPTCP->m_state = TCP_ESTABLISHED;
-        LOG(LS_INFO, "State: TCP_SYN_RECEIVED -> TCP_ESTABLISHED");
+        LOG_F(LS_INFO, "State: TCP_SYN_RECEIVED -> TCP_ESTABLISHED");
         adjustMTU(pPTCP);
         if(pPTCP->OnTcpOpen) {
             pPTCP->OnTcpOpen(pPTCP);
@@ -1111,7 +1133,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 #if _DEBUGMSG >= _DBG_NORMAL
                         memset(pTmp, 0, 1024);
                         sprintf(pTmp, "Recovered: %d  bytes (%d  ->  %d)\n", nAdjust, pPTCP->m_rcv_nxt, pPTCP->m_rcv_nxt + nAdjust);
-                        LOG(LS_VERBOSE, pTmp);
+                        LOG_F(LS_VERBOSE, pTmp);
 #endif // _DEBUGMSG
                         //pPTCP->m_rbuf.ConsumeWriteBuffer(nAdjust);
                         FIFO_ConsumeWriteBuffer(pPTCP->m_rbuf, nAdjust);
@@ -1123,6 +1145,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
                     tMI_DLNODE *vpNode = SEGMENT_LIST_erase(pPTCP->m_rlist, &it->DLNode);
                     free(it);
                     if(vpNode==NULL) {
+                        it = NULL;
                         break;
                     }
 
@@ -1132,7 +1155,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 #if _DEBUGMSG >= _DBG_NORMAL
                 memset(pTmp, 0, 1024);
                 sprintf(pTmp, "Saving: %d  bytes (%d  ->  %d)\n", pSeg->len, pSeg->seq, pSeg->seq + pSeg->len);
-                LOG(LS_VERBOSE, pTmp);
+                LOG_F(LS_VERBOSE, pTmp);
 #endif // _DEBUGMSG
 
                 //RSegment rseg;
@@ -1153,15 +1176,14 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
                     SEGMENT_LIST_insertBefore(pPTCP->m_rlist, &it->DLNode, &pRSSeg->DLNode);
                     //SEGMENT_LIST_insertAfter(pPTCP->m_rlist, &it->DLNode, &pRSSeg->DLNode);
                 }
-//                else {
-//                    ASSERT(it!=NULL);
-//                    //SEGMENT_LIST_push_back(pPTCP->m_rlist, &pRSSeg->DLNode);
-//                }
+                else {
+                    //ASSERT(it!=NULL);
+                    SEGMENT_LIST_push_back(pPTCP->m_rlist, &pRSSeg->DLNode);
+                }
             }
         }
     }
 
-    LOG(LS_INFO, "process done!!");
     attemptSend(pPTCP, sflags);
 
     // If we have new data, notify the user
@@ -1173,6 +1195,10 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
         //notify(evRead);
     }
 
+    memset(pTmp, 0, 1024);
+    sprintf(pTmp, "%s: process done!!\n", PTCP_WHOAMI(pPTCP->tcpId));
+    LOG_F(LS_VERBOSE, pTmp);
+    
     return true;
 }
 
@@ -1183,14 +1209,14 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now)
     ASSERT(pPTCP!=NULL);
     char pTmp[1024]= {0};
     if (seg->xmit >= ((pPTCP->m_state == TCP_ESTABLISHED) ? 15 : 30)) {
-        LOG(LS_INFO, "too many retransmits");
+        LOG_F(LS_INFO, "too many retransmits");
         return false;
     }
 
     U32 nTransmit = MIN(seg->len, pPTCP->m_mss);
 
     while (true) {
-        //LOG(LS_INFO, "while (true)");
+        //LOG_F(LS_INFO, "while (true)");
         U32 seq = seg->seq;
         U8 flags = (seg->bCtrl ? FLAG_CTL : 0);
         //ASSERT(seg->seq >= pPTCP->m_snd_una);
@@ -1204,7 +1230,7 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now)
             break;
 
         if (wres == WR_FAIL) {
-            LOG(LS_INFO, "PTCP_Packet failed\n");
+            LOG_F(LS_INFO, "PTCP_Packet failed\n");
             return false;
         }
 
@@ -1212,7 +1238,7 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now)
 
         while (true) {
             if (PACKET_MAXIMUMS[pPTCP->m_msslevel + 1] == 0) {
-                LOG(LS_INFO, "MTU too small\n");
+                LOG_F(LS_INFO, "MTU too small\n");
                 return false;
             }
             // !?! We need to break up all outstanding and pending PTCP_Packets and then retransmit!?!
@@ -1226,14 +1252,14 @@ bool transmit(tPseudoTcp *pPTCP, tRSSegment *seg, U32 now)
         }
 #if _DEBUGMSG >= _DBG_NORMAL
         sprintf(pTmp,"Adjusting mss to %d bytes\n", pPTCP->m_mss);
-        LOG(LS_VERBOSE, pTmp);
+        LOG_F(LS_VERBOSE, pTmp);
 #endif // _DEBUGMSG
     }
 
     if (nTransmit < seg->len) {
         memset(pTmp, 0, 1024);
         sprintf(pTmp, "mss reduced to %d\n", pPTCP->m_mss);
-        LOG(LS_VERBOSE, pTmp);
+        LOG_F(LS_VERBOSE, pTmp);
 
         //SSegment subseg(seg->seq + nTransmit, seg->len - nTransmit, seg->bCtrl);
         tRSSegment *pRSSeg = malloc(sizeof(tRSSegment));
@@ -1282,7 +1308,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
 #endif // _DEBUGMSG
 
     while (true) {
-        //LOG(LS_INFO, "while (true)");
+        //LOG_F(LS_INFO, "while (true)");
         U32 cwnd = pPTCP->m_cwnd;
         if ((pPTCP->m_dup_acks == 1) || (pPTCP->m_dup_acks == 2)) { // Limited Transmit
             cwnd += pPTCP->m_dup_acks * pPTCP->m_mss;
@@ -1313,7 +1339,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
             bFirst = false;
 
             char pTmpBuf[1024]= {0};
-            sprintf(pTmpBuf, "\n[cwnd: %d\n nWindow: %d\n nInFlight: %d\n nAvailable: %d\n nQueued: %zu\n nEmpty: %zu\n ssthresh: %d]\n",\
+            sprintf(pTmpBuf, "\n[cwnd: %d nWindow: %d nInFlight: %d nAvailable: %d nQueued: %zu nEmpty: %zu ssthresh: %d]\n",\
                     pPTCP->m_cwnd, nWindow, nInFlight, nAvailable, snd_buffered, available_space, pPTCP->m_ssthresh);
             LOG(LS_VERBOSE, pTmpBuf);
         }
@@ -1325,6 +1351,9 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
 
             // If this is an immediate ack, or the second delayed ack
             if ((sflags == sfImmediateAck) || pPTCP->m_t_ack) {
+                char pTmp[1024];
+                sprintf(pTmp, "%s: sfImmediateAck, attempt() -> PTCP_Packet() -> TcpWritePacket()", PTCP_WHOAMI(pPTCP->tcpId));
+                LOG_F(LS_VERBOSE, pTmp);
                 PTCP_Packet(pPTCP, pPTCP->m_snd_nxt, 0, 0, 0);
             } else {
                 pPTCP->m_t_ack = PTCP_Now();
@@ -1353,7 +1382,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
         if(it) {
             SEGMENT_LIST_Dump(pPTCP->m_slist);
             while (it->xmit > 0) {
-                //LOG(LS_INFO, "it->xmit > 0");
+                //LOG_F(LS_INFO, "it->xmit > 0");
                 //++it;
                 //ASSERT(it != pPTCP->m_slist.end());
                 if(it->DLNode.next != NULL) {
@@ -1388,14 +1417,14 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
                 //printf("pPTCP->m_slist->count = %d\n", pPTCP->m_slist->count);
             }
 
-            //LOG(LS_INFO, "transmit(pPTCP, seg, now)");
+            //LOG_F(LS_INFO, "transmit(pPTCP, seg, now)");
             if (!transmit(pPTCP, seg, now)) {
-                LOG(LS_ERROR, "transmit failed");
+                LOG_F(LS_ERROR, "transmit failed");
                 // TODO: consider closing socket
                 return;
             }
         } else {
-            LOG(LS_ERROR, "m_slist is empty");
+            LOG_F(LS_ERROR, "m_slist is empty");
             return;
         }
         sflags = sfNone;
@@ -1405,7 +1434,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
 
 void closedown(tPseudoTcp *pPTCP, U32 err)
 {
-    LOG(LS_INFO, "State: TCP_CLOSED");
+    LOG_F(LS_INFO, "State: TCP_CLOSED");
     ASSERT(pPTCP!=NULL);
     pPTCP->m_state = TCP_CLOSED;
     if(pPTCP->OnTcpClosed) {
@@ -1523,14 +1552,14 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len)
             //buf.Consume(opt_len);
             vLength -= opt_len;
         } else {
-            LOG(LS_INFO, "Invalid option length received.");
+            LOG_F(LS_INFO, "Invalid option length received.");
             return;
         }
 
         // options_specified.insert(kind);
         tSet  *vpSet = malloc(sizeof(tSet));
         if(!vpSet) {
-            LOG(LS_INFO, "malloc fail.");
+            LOG_F(LS_INFO, "malloc fail.");
             return;
         }
         memset(vpSet, 0, sizeof(tSet));
@@ -1568,7 +1597,7 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len)
     
     //if (options_specified.find(TCP_OPT_WND_SCALE) == options_specified.end()) {
     if(bFind==false) {
-        LOG(LS_INFO, "Peer doesn't support window scaling");
+        LOG_F(LS_INFO, "Peer doesn't support window scaling");
 
         if (pPTCP->m_rwnd_scale > 0) {
             // Peer doesn't support TCP options and window scaling.
@@ -1583,13 +1612,13 @@ void applyOption(tPseudoTcp *pPTCP, U8 kind, const U8* data, U32 len)
 {
     ASSERT(pPTCP!=NULL);
     if (kind == TCP_OPT_MSS) {
-        LOG(LS_INFO, "Peer specified MSS option which is not supported.");
+        LOG_F(LS_INFO, "Peer specified MSS option which is not supported.");
         // TODO: Implement.
     } else if (kind == TCP_OPT_WND_SCALE) {
         // Window scale factor.
         // http://www.ietf.org/rfc/rfc1323.txt
         if (len != 1) {
-            LOG(LS_INFO, "Invalid window scale option received.");
+            LOG_F(LS_INFO, "Invalid window scale option received.");
             return;
         }
         applyWindowScaleOption(pPTCP, data[0]);

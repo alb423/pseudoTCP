@@ -34,7 +34,7 @@ extern "C" {
 
 
 /*** GLOBAL TYPES DEFINITIONS ************************************************/
-typedef void  (* tFIFO_CB) (int) ;
+typedef void  (* tFIFO_CB) (void *, int) ;
 
 typedef struct tFIFO_BUFFER {
     tStreamState state;  // keeps the opened/closed state of the stream

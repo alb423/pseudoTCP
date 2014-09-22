@@ -45,8 +45,11 @@ enum ThreadPriority {
     PRIORITY_HIGH = 2,
 };
 
+    
+typedef void  (* tOnMessageCB)(void* message);
+
 typedef struct MessageHandler {
-    int haha;
+    tOnMessageCB OnMessage;
 } tMessageHandler;
 
 
@@ -72,8 +75,16 @@ typedef struct tDelayMessage {
     tMessage *pMsg;
 } tDelayMessage;
 
-typedef void  (* tOnMessageCB)(tMessage* message);
-
+typedef struct tCriticalSection {
+    pthread_mutex_t mutex_;
+} tCriticalSection;
+    
+typedef struct tEvent {
+    int afd_[2];
+    bool fSignaled_;
+    tCriticalSection crit_;
+} tEvent;
+    
 typedef struct tMessageQueue {
     bool fStop;
     bool fPeekKeep;
@@ -83,7 +94,17 @@ typedef struct tMessageQueue {
     U32 dmsgq_next_num;
     tOnMessageCB pOnMessageCB;
     pthread_t         thread;
+    tEvent       event;
 } tMessageQueue;
+
+// Event constants 
+enum DispatcherEvent {
+    DE_READ    = 0x0001,
+    DE_WRITE   = 0x0002,
+    DE_CONNECT = 0x0004,
+    DE_CLOSE   = 0x0008,
+    DE_ACCEPT  = 0x0010,
+};
 
 
 /*** PRIVATE TYPES DEFINITIONS ***********************************************/
@@ -127,7 +148,7 @@ extern void MQueue_Destroy(tMessageQueue *vpIn);
 
 
 extern void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed);
-extern bool MQueue_ProcessMessages(tMessageQueue *pIn, int cmsLoop);
+extern bool Thread_ProcessMessages(tMessageQueue *pIn, int cmsLoop);
 extern void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp, tMessageHandler *phandler, U32 id, tMessageData *pData);
 
 extern void MQueue_Post(tMessageQueue *pIn, tMessageHandler *phandler, U32 id, tMessageData *pData, bool time_sensitive);
@@ -138,14 +159,13 @@ extern size_t MQueue_Size(tMessageQueue *pIn);
 extern bool MQueue_Empty(tMessageQueue *pIn);
 extern bool MQueue_Peek(tMessageQueue *pIn, tMessage *pmsg, int cmsWait);
 extern bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io);
-
+extern void MQueue_ReceiveSends(tMessageQueue *pMQueue) ;
 
 // Event
-void Event_Init(bool manual_reset, bool initially_signaled);
-void Event_Destroy(void);
-void Event_Set(void);
-void Event_Reset(void);
-bool Event_Wait(int cms);
+bool Event_Init(tEvent *vpEvent, bool manual_reset, bool initially_signaled);
+void Event_Destroy(tEvent *vpEvent);
+void Event_WakeUp(tEvent *vpEvent);
+bool Event_Wait(tEvent *pEvent, int cmsWait, bool process_io);
 
 /*****************************************************************************/
 

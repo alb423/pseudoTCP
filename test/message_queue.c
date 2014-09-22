@@ -61,7 +61,8 @@ pthread_mutex_t event_mutex_;
 pthread_cond_t event_cond_;
 
 /*** PRIVATE FUNCTION PROTOTYPES *********************************************/
-
+void CriticalSection_Enter(tCriticalSection *pCrit);
+void CriticalSection_Leave(tCriticalSection *pCrit);
 
 /*** PUBLIC FUNCTION DEFINITIONS *********************************************/
 // ==== Message Queue ====
@@ -119,8 +120,9 @@ bool MList_Empty(tMI_DLIST *pDList)
         if(MI_DlCount(pDList)==0) {
             return true;
         }
+        return false;
     }
-    return false;
+    return true;
 }
 
 // Return size
@@ -190,11 +192,11 @@ void MList_Pop_Back(tMI_DLIST *pDList)
 // Delete current element
 tMI_DLNODE *MList_Erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 {
-#if _DEBUGMSG >= _DBG_VERBOSE
-    char pTmpBuf[1024]= {0};
-    sprintf(pTmpBuf, "%s pNode=0x%08x\n", __func__, (U32)pNode);
-    LOG(LS_VERBOSE, pTmpBuf);
-#endif // _DEBUGMSG
+//#if _DEBUGMSG >= _DBG_VERBOSE
+//    char pTmpBuf[1024]= {0};
+//    sprintf(pTmpBuf, "pNode=0x%08x\n", (U32)pNode);
+//    LOG_F(LS_VERBOSE, pTmpBuf);
+//#endif // _DEBUGMSG
 
     if(pDList) {
         U32 vIndex;
@@ -578,7 +580,7 @@ void* PreRun(void* pv)
 {
     tMessageQueue *vpIn = (tMessageQueue *)pv;
     vpIn->fStop = false;
-    MQueue_ProcessMessages(vpIn, kForever);
+    Thread_ProcessMessages(vpIn, kForever);
     return NULL;
 }
 
@@ -594,7 +596,7 @@ tMessageQueue * MQueue_Init(tOnMessageCB pCB)
         PQueue_Init(&vpIn->dmsgq);
         vpIn->dmsgq_next_num = 0;
 
-        Event_Init(false, false);
+        Event_Init(&vpIn->event, false, false);
         vpIn->pOnMessageCB = pCB;
 
         // create a thread to handle message received (pass the msg to pOnMessageCB())
@@ -627,19 +629,75 @@ void MQueue_Destroy(tMessageQueue *vpIn)
 //      vReturn = pthread_join(&vpIn->thread, &res);
 //#endif
 
-        Event_Destroy();
+        Event_Destroy(&vpIn->event);
 
         free(vpIn);
     }
 }
 
+#if 1
+    void MQueue_ReceiveSends(tMessageQueue *pMQueue) { ;}
+#else
+void MQueue_ReceiveSends(tMessageQueue *pMQueue) {
+    
+    // Receive a sent message. Cleanup scenarios:
+    // - thread sending exits: We don't allow this, since thread can exit
+    //   only via Join, so Send must complete.
+    // - thread receiving exits: Wakeup/set ready in Thread::Clear()
+    // - object target cleared: Wakeup/set ready in Thread::Clear()
+    
+    // crit_.Enter();
+    CriticalSection_Enter(&pMQueue->event.crit_);
+    
+    while (!MList_Empty(&pMQueue->msgq)) {
+        // _SendMessage smsg = sendlist_.front();
+        // sendlist_.pop_front();
+        // crit_.Leave();
+        // smsg.msg.phandler->OnMessage(&smsg.msg);
+        // crit_.Enter();
+        // *smsg.ready = true;
+        // smsg.thread->socketserver()->WakeUp();
+        
+        tMessage vxSendMssg;
+        memset(&vxSendMssg, 0, sizeof(tMessage));
+        
+        tMessage *pTmpMsg = MList_Front(&pMQueue->msgq);
+        MList_Pop_Front(&pMQueue->msgq);
+        if(pTmpMsg)
+        {
+            // copy the structure from pTmpMsg to pmsg
+            vxSendMssg = *pTmpMsg;
+            MList_Pop_Front(&pMQueue->msgq);
+            // TODO: check here
+            free(pTmpMsg);
+        }
+        
+        // pthread_mutex_unlock(&_mutex);
+        CriticalSection_Leave(&pMQueue->event.crit_);
+        if(pMQueue->pOnMessageCB)
+            pMQueue->pOnMessageCB(&vxSendMssg);
+        
+        //pthread_mutex_lock(&_mutex);
+        CriticalSection_Enter(&pMQueue->event.crit_);
+        
+        //vxSendMssg.ready = true;
+        //Event_WakeUp(&pMQueue->event);
+    }
+    
+    //crit_.Leave();
+    CriticalSection_Leave(&pMQueue->event.crit_);
 
+}
+#endif
+    
 void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
 {
     //CritScope cs(&crit_);
-    //LOG(LS_INFO, "pthread_mutex_lock _mutex");
-    pthread_mutex_lock(&_mutex);
-    //LOG(LS_INFO, "MQueue_Clear");
+    //LOG_F(LS_INFO, "pthread_mutex_lock _mutex");
+    //pthread_mutex_lock(&_mutex);
+    
+    CriticalSection_Enter(&pMQueue->event.crit_);
+    //LOG_F(LS_INFO, "MQueue_Clear");
     // Remove messages with phandler
     if (!pMQueue)
         return ;
@@ -709,7 +767,7 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
 
         if(pPQNode) {
             for(; pPQNode != NULL ; ) {
-                //LOG(LS_INFO, "pPQNode != NULL");
+                //LOG_F(LS_INFO, "pPQNode != NULL");
                 do {
                     pDelayMsg = MI_NODEENTRY(pPQNode, tDelayMessage, PQNode);
                     if(pDelayMsg) {
@@ -741,9 +799,19 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
                     }
                     //*new_end++ = *it;
                     if (pPQNode->h.next == 0) {
-                        pPQNode = pPQNode->v.next;
+                        if(pPQNode == pPQNode->v.next) {
+                            pPQNode = NULL;
+                        }
+                        else {
+                            pPQNode = pPQNode->v.next;
+                        }
                     } else {
-                        pPQNode = pPQNode->h.next;
+                        if(pPQNode == pPQNode->h.next) {
+                            pPQNode = NULL;
+                        }
+                        else {
+                            pPQNode = pPQNode->h.next;
+                        }
                     }
                     //printf("PQueue:: pPQNode=0x%08x\n", (U32)pPQNode);
 
@@ -754,41 +822,18 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
 
     //dmsgq_.container().erase(new_end, dmsgq_.container().end());
     //dmsgq_.reheap();
-    //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
-    pthread_mutex_unlock(&_mutex);
-
+    //LOG_F(LS_INFO, "pthread_mutex_unlock _mutex");
+    //pthread_mutex_unlock(&_mutex);
+    CriticalSection_Leave(&pMQueue->event.crit_);
 }
 
-
-
-bool MQueue_ProcessMessages(tMessageQueue *pIn, int cmsLoop)
-{
-    U32 msEnd = (kForever == cmsLoop) ? 0 : TimeAfter(cmsLoop);
-    int cmsNext = cmsLoop;
-
-    while (true) {
-        tMessage msg;
-        memset(&msg, 0, sizeof(tMessage));
-
-//        tMessage *pMsg = malloc(sizeof(tMessage));
-//        memset(pMsg, 0, sizeof(tMessage));
-        //LOG(LS_INFO, "MQueue_Get");
-        if (!MQueue_Get(pIn, &msg, cmsNext, true)) {
-            //LOG(LS_INFO, "return");
-            return !IsQuitting(pIn);
-        }
-
-        if(pIn->pOnMessageCB)
-            pIn->pOnMessageCB(&msg);
-
-        if (cmsLoop != kForever) {
-            cmsNext = TimeUntil(msEnd);
-            if (cmsNext < 0)
-                return true;
-        }
+void MQueue_Dispatch(tMessage *pmsg) {
+    if(pmsg->phandler) {
+        // 此處的 OnMessage 並非 unittest 內的 OnMessage
+        pmsg->phandler->OnMessage(pmsg);
     }
 }
-
+    
 void MQueue_Post(tMessageQueue *pIn, tMessageHandler *phandler, U32 id, tMessageData *pData, bool time_sensitive)
 {
     if (pIn->fStop)
@@ -799,8 +844,10 @@ void MQueue_Post(tMessageQueue *pIn, tMessageHandler *phandler, U32 id, tMessage
     // Signal for the multiplexer to return.
 
     //CritScope cs(&crit_);
-    LOG(LS_INFO, "pthread_mutex_lock _mutex");
-    pthread_mutex_lock(&_mutex);
+    CriticalSection_Enter(&pIn->event.crit_);
+    
+    //LOG_F(LS_INFO, "pthread_mutex_lock _mutex");
+    //pthread_mutex_lock(&_mutex);
     tMessage *pMsg = malloc(sizeof(tMessage));
     memset(pMsg, 0, sizeof(tMessage));
     pMsg->phandler = phandler;
@@ -813,9 +860,11 @@ void MQueue_Post(tMessageQueue *pIn, tMessageHandler *phandler, U32 id, tMessage
     MList_Push_Back(&pIn->msgq, &pMsg->DLNode);
 
     //ss_->WakeUp();
-    Event_Set();
-    LOG(LS_INFO, "pthread_mutex_unlock _mutex");
-    pthread_mutex_unlock(&_mutex);
+    Event_WakeUp(&pIn->event);
+    //LOG_F(LS_INFO, "pthread_mutex_unlock _mutex");
+    //pthread_mutex_unlock(&_mutex);
+    
+    CriticalSection_Leave(&pIn->event.crit_);
 }
 
 
@@ -824,12 +873,18 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
 {
     ASSERT(pIn != NULL);
 
-    pthread_mutex_lock(&_mutex);
-    if (pIn->fStop) {
-        pthread_mutex_unlock(&_mutex);
+//    pthread_mutex_lock(&_mutex);
+//    if (pIn->fStop) {
+//        pthread_mutex_unlock(&_mutex);
+//        return;
+//    }
+
+    CriticalSection_Enter(&pIn->event.crit_);
+    if(pIn->fStop) {
+        CriticalSection_Leave(&pIn->event.crit_);
         return;
     }
-
+    
 #ifdef CHECK_COPY_BUFFER
     int i=0;
     int vHEADER_SIZE = 24 + 4;
@@ -848,7 +903,7 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
     // Signal for the multiplexer to return.
 
     //CritScope cs(&crit_);
-    //LOG(LS_INFO, "pthread_mutex_lock _mutex");
+    //LOG_F(LS_INFO, "pthread_mutex_lock _mutex");
     //pthread_mutex_lock(&_mutex);
     tMessage *pMsg = malloc(sizeof(tMessage));
     if(pMsg) {
@@ -866,7 +921,7 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
             pDMsg->pMsg  = pMsg;
 
             //dmsgq_.push(dmsg);
-            //LOG(LS_INFO, "PQueue_Push");
+            //LOG_F(LS_INFO, "PQueue_Push");
             //printf("&pIn->dmsgq=0x%x pDMsg=0x%x pDMsg->PQNode=0x%x\n", (U32)&pIn->dmsgq, (U32)pDMsg, (U32)&pDMsg->PQNode);
             PQueue_Push(&pIn->dmsgq, &pDMsg->PQNode);
         } else {
@@ -880,9 +935,11 @@ void MQueue_DoDelayPost(tMessageQueue *pIn, int cmsDelay, U32 tstamp,
     // will be misordered, and then only briefly.  This is probably ok.
     //VERIFY(0 != ++dmsgq_next_num_);
     //ss_->WakeUp();
-    Event_Set();
-    //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
-    pthread_mutex_unlock(&_mutex);
+    VERIFY(0 != ++pIn->dmsgq_next_num);
+    Event_WakeUp(&pIn->event);
+    //LOG_F(LS_INFO, "pthread_mutex_unlock _mutex");
+    //pthread_mutex_unlock(&_mutex);
+    CriticalSection_Leave(&pIn->event.crit_);
 }
 
 void MQueue_PostDelayed(tMessageQueue *pIn, int cmsDelay, U32 id, tMessageData *pData)
@@ -897,15 +954,15 @@ void MQueue_PostAt(tMessageQueue *pIn, U32 tstamp, tMessageHandler *phandler, U3
 
 void MQueue_Quit(tMessageQueue *pIn)
 {
-    LOG(LS_VERBOSE, "MQueue_Quit");
+    LOG_F(LS_VERBOSE, "MQueue_Quit");
     pIn->fStop = true;
     //ss_->WakeUp();
-    Event_Set();
+    Event_WakeUp(&pIn->event);
 }
 
 void MQueue_Restart(tMessageQueue *pIn)
 {
-    LOG(LS_VERBOSE, "MQueue_Restart");
+    LOG_F(LS_VERBOSE, "MQueue_Restart");
     pIn->fStop = false;
 }
 
@@ -918,12 +975,16 @@ bool IsQuitting(tMessageQueue *pIn)
 size_t MQueue_Size(tMessageQueue *pIn)
 {
     //CritScope cs(&crit_);  // msgq_.size() is not thread safe.
-    LOG(LS_INFO, "pthread_mutex_lock _mutex");
-    pthread_mutex_lock(&_mutex);
+    
+
+//    LOG_F(LS_INFO, "pthread_mutex_lock _mutex");
+//    pthread_mutex_lock(&_mutex);
+    CriticalSection_Enter(&pIn->event.crit_);
     int i;
     i = MList_Size(&pIn->msgq) + PQueue_Size(&pIn->dmsgq) + (pIn->fPeekKeep ? 1u : 0u);
-    LOG(LS_INFO, "pthread_mutex_unlock _mutex");
-    pthread_mutex_unlock(&_mutex);
+//    LOG_F(LS_INFO, "pthread_mutex_unlock _mutex");
+//    pthread_mutex_unlock(&_mutex);
+    CriticalSection_Leave(&pIn->event.crit_);
     return i;
 }
 
@@ -949,7 +1010,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
 {
     // Return and clear peek if present
     // Always return the peek if it exists so there is Peek/Get symmetry
-
+    
     if (pIn->fPeekKeep) {
         *pmsg = pIn->msgPeek;
         pIn->fPeekKeep = false;
@@ -965,7 +1026,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
     
     while (true) {
         // Check for sent messages
-        //ReceiveSends();
+        MQueue_ReceiveSends(pIn);
 
         // Check for posted events
         int cmsDelayNext = kForever;
@@ -975,10 +1036,11 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
             // (specifically handling disposed message) can happen inside the crit.
             // Otherwise, disposed MessageHandlers will cause deadlocks.
 
-            pthread_mutex_lock(&_mutex);
+            //pthread_mutex_lock(&_mutex);
+            CriticalSection_Enter(&pIn->event.crit_);
             {
                 //CritScope cs(&crit_);
-                //LOG(LS_INFO, "pthread_mutex_lock _mutex");
+                //LOG_F(LS_INFO, "pthread_mutex_lock _mutex");
                 //pthread_mutex_lock(&_mutex);
 
                 // On the first pass, check for delayed messages that have been
@@ -1006,7 +1068,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                 }
                 // Pull a message off the message queue, if available.
                 if (MList_Empty(&pIn->msgq)) {
-                    //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
+                    //LOG_F(LS_INFO, "pthread_mutex_unlock _mutex");
                     pthread_mutex_unlock(&_mutex);
                     break;
                 } else {
@@ -1022,8 +1084,9 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                 }
 
             }  // crit_ is released here.
-            //LOG(LS_INFO, "pthread_mutex_unlock _mutex");
-            pthread_mutex_unlock(&_mutex);
+            //LOG_F(LS_INFO, "pthread_mutex_unlock _mutex");
+            //pthread_mutex_unlock(&_mutex);
+            CriticalSection_Leave(&pIn->event.crit_);
 
             // Log a warning for time-sensitive messages that we're late to deliver.
             if (pmsg->ts_sensitive) {
@@ -1031,7 +1094,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                 if (delay > 0) {
                     char pTmp[1024] = {0};
                     sprintf(pTmp, "id: %d  delay: %d  ms\n", pmsg->message_id, (delay + kMaxMsgLatency));
-                    LOG(LS_VERBOSE, pTmp);
+                    LOG_F(LS_VERBOSE, pTmp);
                     //LOG_F(LS_WARNING) << "id: " << pmsg->message_id << "  delay: "
                     //                << (delay + kMaxMsgLatency) << "ms";
                 }
@@ -1053,8 +1116,6 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                 memset(pmsg, 0, sizeof(tMessage));
                 continue;
             }
-            
-            
             // Now we return a pmsg with correct data
             return true;
         }
@@ -1076,7 +1137,7 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
         // Wait and multiplex in the meantime
         //if (!ss_->Wait(cmsNext, process_io))
         //   return false;
-        if(!Event_Wait(cmsNext))
+        if(!Event_Wait(&pIn->event, cmsNext, process_io))
             return false;
 
         // If the specified timeout expired, return
@@ -1092,98 +1153,329 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
 }
 
 
+
 // ==== Event ====
-void Event_Init(bool manual_reset, bool initially_signaled)
-{
-    is_manual_reset_ = manual_reset;
-    event_status_ = initially_signaled;
-    VERIFY(pthread_mutex_init(&event_mutex_, NULL) == 0);
-    VERIFY(pthread_cond_init(&event_cond_, NULL) == 0);
+// reference libjingle_tests\....\physicalsocketserver.cc
+#include "unistd.h"
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <unistd.h>
+#include <signal.h>
+bool fWait_;
+
+void CriticalSection_Init(tCriticalSection *pCrit) {
+    if(!pCrit)
+        return;
+    
+    pthread_mutexattr_t mutex_attribute;
+    pthread_mutexattr_init(&mutex_attribute);
+    pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&pCrit->mutex_, &mutex_attribute);
+    pthread_mutexattr_destroy(&mutex_attribute);
 }
 
-void Event_Destroy(void)
-{
-    pthread_mutex_destroy(&event_mutex_);
-    pthread_cond_destroy(&event_cond_);
+void CriticalSection_Destroy(tCriticalSection *pCrit) {
+    if(!pCrit)
+        return;
+    
+    pthread_mutex_destroy(&pCrit->mutex_);
 }
-
-void Event_Set(void)
-{
-    //LOG(LS_INFO, "Event_Set  pthread_mutex_lock  event_mutex_");
-    pthread_mutex_lock(&event_mutex_);
-    event_status_ = true;
-    pthread_cond_broadcast(&event_cond_);
-    //LOG(LS_INFO, "Event_Set  pthread_mutex_unlock  event_mutex_");
-    pthread_mutex_unlock(&event_mutex_);
+    
+void CriticalSection_Enter(tCriticalSection *pCrit) {
+    if(!pCrit)
+        return;
+    
+    pthread_mutex_lock(&pCrit->mutex_);
+    //TRACK_OWNER(thread_ = pthread_self());
 }
-
-void Event_Reset(void)
-{
-    LOG(LS_INFO, "pthread_mutex_lock  event_mutex_");
-    pthread_mutex_lock(&event_mutex_);
-    event_status_ = false;
-    LOG(LS_INFO, "pthread_mutex_unlock  event_mutex_");
-    pthread_mutex_unlock(&event_mutex_);
-}
-
-bool Event_Wait(int cms)
-{
-
-    //LOG(LS_INFO, "pthread_mutex_lock  event_mutex_");
-    pthread_mutex_lock(&event_mutex_);
-    //printf("Event_Wait for %d ms\n", cms);
-
-    int error = 0;
-
-    if (cms != kForever) {
-        // Converting from seconds and microseconds (1e-6) plus
-        // milliseconds (1e-3) to seconds and nanoseconds (1e-9).
-
-        struct timespec ts;
-#if HAVE_PTHREAD_COND_TIMEDWAIT_RELATIVE
-        // Use relative time version, which tends to be more efficient for
-        // pthread implementations where provided (like on Android).
-        ts.tv_sec = cms / 1000;
-        ts.tv_nsec = (cms % 1000) * 1000000;
-#else
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-
-        ts.tv_sec = tv.tv_sec + (cms / 1000);
-        ts.tv_nsec = tv.tv_usec * 1000 + (cms % 1000) * 1000000;
-
-        // Handle overflow.
-        if (ts.tv_nsec >= 1000000000) {
-            ts.tv_sec++;
-            ts.tv_nsec -= 1000000000;
-        }
-#endif
-
-        while (!event_status_ && error == 0) {
-#if HAVE_PTHREAD_COND_TIMEDWAIT_RELATIVE
-            error = pthread_cond_timedwait_relative_np(
-                        &event_cond_, &event_mutex_, &ts);
-#else
-            error = pthread_cond_timedwait(&event_cond_, &event_mutex_, &ts);
-#endif
-        }
-    } else {
-        while (!event_status_ && error == 0)
-            error = pthread_cond_wait(&event_cond_, &event_mutex_);
+    
+bool CriticalSection_TryEnter(tCriticalSection *pCrit) {
+    if(!pCrit)
+        return false;
+    
+    if (pthread_mutex_trylock(&pCrit->mutex_) == 0) {
+        //TRACK_OWNER(thread_ = pthread_self());
+        return true;
     }
-
-    // NOTE(liulk): Exactly one thread will auto-reset this event. All
-    // the other threads will think it's unsignaled.  This seems to be
-    // consistent with auto-reset events in WIN32.
-    if (error == 0 && !is_manual_reset_)
-        event_status_ = false;
-
-    //LOG(LS_INFO, "pthread_mutex_unlock  event_mutex_");
-    pthread_mutex_unlock(&event_mutex_);
-
-    return (error == 0);
+    return false;
+}
+    
+void CriticalSection_Leave(tCriticalSection *pCrit) {
+    if(!pCrit)
+        return;
+    
+    //TRACK_OWNER(thread_ = 0);
+    pthread_mutex_unlock(&pCrit->mutex_);
+}
+    
+bool Event_Init(tEvent *pEvent, bool manual_reset, bool initially_signaled)
+{
+    if(!pEvent) {
+        return false;
+    }
+    
+    pEvent->fSignaled_ = false;
+    if (pipe(pEvent->afd_) < 0) {
+        LOG_F(LS_ERROR, "pipe failed");
+    }
+    
+    CriticalSection_Init(&pEvent->crit_);
+    return true;
 }
 
+void Event_Destroy(tEvent *pEvent)
+{
+    if(pEvent) {
+        close(pEvent->afd_[0]);
+        close(pEvent->afd_[1]);
+        CriticalSection_Destroy(&pEvent->crit_);
+    }
+}
+
+// WakeUp
+void Event_WakeUp(tEvent *pEvent)
+{
+    //printf("Event_WakeUp\n");
+    if(pEvent) {
+        CriticalSection_Enter(&pEvent->crit_);
+        if (!pEvent->fSignaled_) {
+            const unsigned char b[1] = { 0 };
+            if (VERIFY(1 == write(pEvent->afd_[1], b, sizeof(b)))) {
+                pEvent->fSignaled_ = true;
+            }
+        }
+        CriticalSection_Leave(&pEvent->crit_);
+    }
+}
+
+void Event_OnPreEvent(tEvent *pEvent, uint32_t ff) {
+    // It is not possible to perfectly emulate an auto-resetting event with
+    // pipes.  This simulates it by resetting before the event is handled.
+
+    CriticalSection_Enter(&pEvent->crit_);
+    if (pEvent->fSignaled_) {
+        uint8_t b[4];  // Allow for reading more than 1 byte, but expect 1.
+        VERIFY(1 == read(pEvent->afd_[0], b, sizeof(b)));
+        pEvent->fSignaled_ = false;
+    }
+    CriticalSection_Leave(&pEvent->crit_);
+}
+
+void Event_OnEvent(tEvent *pEvent, uint32_t ff, int err) {
+    ASSERT(false);
+}
+    
+bool Event_Wait(tEvent *pEvent, int cmsWait, bool process_io)
+{
+    //printf("Event_Wait\n");
+    static vEventWaitCnt=0;
+    // Calculate timing information
+    if(!pEvent)
+        return false;
+    
+    vEventWaitCnt++;
+    
+    struct timeval *ptvWait = NULL;
+    struct timeval tvWait;
+    struct timeval tvStop;
+    if (cmsWait != kForever) {
+        // Calculate wait timeval
+        tvWait.tv_sec = cmsWait / 1000;
+        tvWait.tv_usec = (cmsWait % 1000) * 1000;
+        ptvWait = &tvWait;
+        
+        // Calculate when to return in a timeval
+        gettimeofday(&tvStop, NULL);
+        tvStop.tv_sec += tvWait.tv_sec;
+        tvStop.tv_usec += tvWait.tv_usec;
+        if (tvStop.tv_usec >= 1000000) {
+            tvStop.tv_usec -= 1000000;
+            tvStop.tv_sec += 1;
+        }
+    }
+    
+    // Zero all fd_sets. Don't need to do this inside the loop since
+    // select() zeros the descriptors not signaled
+    
+    fd_set fdsRead;
+    FD_ZERO(&fdsRead);
+    fd_set fdsWrite;
+    FD_ZERO(&fdsWrite);
+    
+    fWait_ = true;
+    
+    while (fWait_) {
+
+        int fdmax = -1;
+        
+        //CritScope cr(&crit_);
+        CriticalSection_Enter(&pEvent->crit_);
+        {
+            //if (!process_io && (pdispatcher != signal_wakeup_))
+            if (!process_io)
+                continue;
+            
+            int fd = pEvent->afd_[0];
+            if (fd > fdmax)
+                fdmax = fd;
+            FD_SET(fd, &fdsRead);
+        }
+        CriticalSection_Leave(&pEvent->crit_);
+        
+        // Wait then call handlers as appropriate
+        // < 0 means error
+        // 0 means timeout
+        // > 0 means count of descriptors ready
+        int n = select(fdmax + 1, &fdsRead, &fdsWrite, NULL, ptvWait);
+        
+        // If error, return error.
+        //printf("time=%ld:%d n=%d vEventWaitCnt=%d\n", tvStop.tv_sec, tvStop.tv_usec, n, vEventWaitCnt);
+        //printf("n=%d vEventWaitCnt=%d\n", n, vEventWaitCnt);
+        if (n < 0) {
+            if (errno != EINTR) {
+                LOG_F(LS_ERROR, "select");
+                return false;
+            }
+            // Else ignore the error and keep going. If this EINTR was for one of the
+            // signals managed by this PhysicalSocketServer, the
+            // PosixSignalDeliveryDispatcher will be in the signaled state in the next
+            // iteration.
+        } else if (n == 0) {
+            // If timeout, return success
+            return true;
+        } else {
+            // We have signaled descriptors
+            CriticalSection_Enter(&pEvent->crit_);
+            {
+                int fd = pEvent->afd_[0];
+                uint32_t ff = 0;
+                int errcode = 0;
+                
+                if (FD_ISSET(fd, &fdsRead) || FD_ISSET(fd, &fdsWrite)) {
+                    socklen_t len = sizeof(errcode);
+                    //int	getsockopt(int, int, int, void * __restrict, socklen_t * __restrict);
+                    
+                    getsockopt(fd, SOL_SOCKET, SO_ERROR, &errcode, &len);
+                }
+                
+                if (FD_ISSET(fd, &fdsRead)) {
+                    FD_CLR(fd, &fdsRead);
+                    if (errcode) {
+                        ff |= DE_CLOSE;
+                    } else {
+                        ff |= DE_READ;
+                    }
+                }
+                
+                // Tell the descriptor about the event.
+                if (ff != 0) {
+                    Event_OnPreEvent(pEvent, ff);
+                    //Event_OnEvent(pEvent, ff, errcode);
+                    fWait_ = false;
+                }
+            }
+            CriticalSection_Leave(&pEvent->crit_);
+        }
+        
+        // Recalc the time remaining to wait. Doing it here means it doesn't get
+        // calced twice the first time through the loop
+        if (ptvWait) {
+            ptvWait->tv_sec = 0;
+            ptvWait->tv_usec = 0;
+            struct timeval tvT;
+            gettimeofday(&tvT, NULL);
+            if ((tvStop.tv_sec > tvT.tv_sec)
+                || ((tvStop.tv_sec == tvT.tv_sec)
+                    && (tvStop.tv_usec > tvT.tv_usec))) {
+                    ptvWait->tv_sec = tvStop.tv_sec - tvT.tv_sec;
+                    ptvWait->tv_usec = tvStop.tv_usec - tvT.tv_usec;
+                    if (ptvWait->tv_usec < 0) {
+                        ASSERT(ptvWait->tv_sec > 0);
+                        ptvWait->tv_usec += 1000000;
+                        ptvWait->tv_sec -= 1;
+                    }
+                }
+        }
+    }
+    
+    return true;
+}
+
+    
+// ==== Thread ====
+// rtc::Thread::Current()->ProcessMessages()
+// rtc::Thread::Current()->Clear()
+// rtc::Thread::Current()->Post()
+// rtc::Thread::Current()->PostDelayed()
+// rtc::Thread::Current()->size()
+
+    
+bool Thread_ProcessMessages(tMessageQueue *pIn, int cmsLoop)
+{
+    U32 msEnd = (kForever == cmsLoop) ? 0 : TimeAfter(cmsLoop);
+    int cmsNext = cmsLoop;
+    
+    while (true) {
+        {
+            tMessage msg;
+            memset(&msg, 0, sizeof(tMessage));
+            
+            //LOG_F(LS_INFO, "MQueue_Get");
+            if (!MQueue_Get(pIn, &msg, cmsNext, true)) {
+                //printf( "return !IsQuitting %d  ", !IsQuitting(pIn));
+                return !IsQuitting(pIn);
+            }
+            
+            //MQueue_Dispatch(&msg);
+            if(pIn->pOnMessageCB)
+                pIn->pOnMessageCB(&msg);
+            
+            if (cmsLoop != kForever) {
+                cmsNext = TimeUntil(msEnd);
+                if (cmsNext < 0)
+                    return true;
+            }
+            //printf("cmsNext=%d\n",cmsNext);
+        }
+    }
+}
+
+
+#if 0
+void Thread_Clear(MessageHandler *phandler, uint32 id,
+                  MessageList* removed) {
+    CritScope cs(&crit_);
+    
+    // Remove messages on sendlist_ with phandler
+    // Object target cleared: remove from send list, wakeup/set ready
+    // if sender not NULL.
+    
+    std::list<_SendMessage>::iterator iter = sendlist_.begin();
+    while (iter != sendlist_.end()) {
+        _SendMessage smsg = *iter;
+        if (smsg.msg.Match(phandler, id)) {
+            if (removed) {
+                removed->push_back(smsg.msg);
+            } else {
+                delete smsg.msg.pdata;
+            }
+            iter = sendlist_.erase(iter);
+            *smsg.ready = true;
+            smsg.thread->socketserver()->WakeUp();
+            continue;
+        }
+        ++iter;
+    }
+    
+    MQueue_Clear(phandler, id, removed);
+    //MQueue_Clear(tMessageQueue *pMQueue, id, tMI_DLIST* removed);
+}
+#endif
 /*****************************************************************************/
 
 #ifdef __cplusplus

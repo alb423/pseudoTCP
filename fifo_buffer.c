@@ -481,7 +481,7 @@ tStreamResult FIFO_Read(tFIFO_BUFFER *pFifo,
         if (!was_writable && copy > 0) {
             //PostEvent(owner_, SE_WRITE, 0);
             if(pFifo->pNotifyWriteCB)
-                pFifo->pNotifyWriteCB(0);
+                pFifo->pNotifyWriteCB(NULL, 0);
         }
     }
     pthread_mutex_unlock(&pFifo->mutex);
@@ -564,10 +564,11 @@ tStreamResult FIFO_Write(tFIFO_BUFFER *pFifo,
         if (!was_readable && copy > 0) {
             //PostEvent(owner_, SE_READ, 0);
             if(pFifo->pNotifyReadCB)
-                pFifo->pNotifyReadCB(0);
+                pFifo->pNotifyReadCB(NULL, 0);
         }
     } else {
-        ASSERT(result == SR_SUCCESS);
+        // do nothing
+        ;
     }
     pthread_mutex_unlock(&pFifo->mutex);
 
@@ -624,10 +625,12 @@ void FIFO_ConsumeReadData(tFIFO_BUFFER *pFifo, size_t size)
     was_writable = pFifo->data_length < pFifo->buffer_length;
     pFifo->read_position = (pFifo->read_position + size) % pFifo->buffer_length;
     pFifo->data_length -= size;
+    
+    //printf("ConsumeReadData, data size=%ld, comsume size=%ld\n", pFifo->data_length, size);
     if (!was_writable && size > 0) {
         //PostEvent(owner_, SE_WRITE, 0);
         if(pFifo->pNotifyWriteCB)
-            pFifo->pNotifyWriteCB(0);
+            pFifo->pNotifyWriteCB(NULL, 0);
     }
     pthread_mutex_unlock(&pFifo->mutex);
 }
@@ -690,7 +693,7 @@ void FIFO_ConsumeWriteBuffer(tFIFO_BUFFER *pFifo, size_t size)
     if (!was_readable && size > 0) {
         //PostEvent(owner_, SE_READ, 0);
         if(pFifo->pNotifyReadCB)
-            pFifo->pNotifyReadCB(0);
+            pFifo->pNotifyReadCB(NULL, 0);
     }
     pthread_mutex_unlock(&pFifo->mutex);
 }

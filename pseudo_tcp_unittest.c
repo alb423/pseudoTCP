@@ -44,8 +44,6 @@ extern "C" {
 #define LOCAL  0
 #define REMOTE 1
 
-#define MSG_POST_EVENT  0xF1F1
-    
 inline S64 MillisecondTimestamp()
 {
     S64 ticks = 0;
@@ -62,7 +60,7 @@ void SleepMs(int msecs)
     struct timespec remainder;
     short_wait.tv_sec = msecs / 1000;
     short_wait.tv_nsec = (msecs % 1000) * 1000 * 1000;
-    LOG_F(LS_INFO, "SleepMs");
+    LOG(LS_INFO, "SleepMs");
     nanosleep(&short_wait, &remainder);
 }
 
@@ -89,7 +87,7 @@ do { \
     /* printf("res=%d, start=%d, timeout=%d Total=%d\n", res, start, timeout, (start + timeout)); */\
     while (!res && (Time() < start + timeout)) { \
         /* printf("current=%d, timeout=%d \n", Time(), (start + timeout)); */ \
-        Thread_ProcessMessages(_gpPTCPTestBase->msq, 1); \
+        MQueue_ProcessMessages(_gpPTCPTestBase->msq, 1); \
         res = (ex); \
     } \
 } while (0);
@@ -109,7 +107,7 @@ do { \
 
 /*** PRIVATE VARIABLE DECLARATIONS (STATIC) **********************************/
 static const int kConnectTimeoutMs = 10000;  // ~3 * default RTO of 3000ms
-static const int kTransferTimeoutMs = 1000*1000;//15000;
+    static const int kTransferTimeoutMs = 300*1000;//15000;
 static const int kBlockSize = 4096;
 enum { MSG_LPACKET, MSG_RPACKET, MSG_LCLOCK, MSG_RCLOCK, MSG_IOCOMPLETE,
        MSG_WRITE
@@ -123,9 +121,7 @@ void OnTcpWriteable_01(tPseudoTcp* tcp);
 void OnTcpReadable_01(tPseudoTcp* tcp);
 tWriteResult TcpWritePacket_01(tPseudoTcp* pPTCP, const char* buffer, size_t len);
 void OnMessage(tMessage* message);
-void NotifyReadCB(tPseudoTcp *pPTCP, int vIn);
-void NotifyWriteCB(tPseudoTcp *pPTCP, int vIn);
-    
+
 /*** PUBLIC FUNCTION DEFINITIONS *********************************************/
 
 typedef struct tPseudoTcpForTest {
@@ -160,7 +156,7 @@ void PseudoTcpTest_Destroy(tPseudoTcpForTest *pPseudoTcpForTest)
     free(pPseudoTcpForTest);
 }
     
-tPseudoTcpForTest *PseudoTcpTest_Init(U32 conv, U8 vTcpId)
+tPseudoTcpForTest *PseudoTcpTest_Init(U32 conv)
 {
     tPseudoTcpForTest *pPseudoTcpForTest = malloc(sizeof(tPseudoTcpForTestBase));
     memset(pPseudoTcpForTest, 0, sizeof(tPseudoTcpForTest));
@@ -172,10 +168,8 @@ tPseudoTcpForTest *PseudoTcpTest_Init(U32 conv, U8 vTcpId)
     vxNotify.OnTcpClosed     = (tOnTcpClosedCB)OnTcpClosed_01;
     vxNotify.TcpWritePacket  = (tTcpWritePacketCB)TcpWritePacket_01;
     
-    pPseudoTcpForTest->tcp   = PTCP_Init(&vxNotify, (tFIFO_CB)NotifyReadCB, (tFIFO_CB)NotifyWriteCB, conv);
+    pPseudoTcpForTest->tcp   = PTCP_Init(&vxNotify, conv);
     
-    // For Debug
-    pPseudoTcpForTest->tcp->tcpId = vTcpId;
     return pPseudoTcpForTest;
 }
     
@@ -185,14 +179,14 @@ tPseudoTcpForTestBase * PseudoTcpTestBase_Init(U32 conv)
     tPseudoTcpForTestBase *pPTCPTestBase = malloc(sizeof(tPseudoTcpForTestBase));
     memset(pPTCPTestBase, 0, sizeof(tPseudoTcpForTestBase));
 
-    pPTCPTestBase->local_ = PseudoTcpTest_Init(conv, 0);
+    pPTCPTestBase->local_ = PseudoTcpTest_Init(conv);
     _gpLocal = pPTCPTestBase->local_;
 
-    pPTCPTestBase->remote_ = PseudoTcpTest_Init(conv, 1);
+    pPTCPTestBase->remote_ = PseudoTcpTest_Init(conv);
     _gpRemote = pPTCPTestBase->remote_;
     
-    pPTCPTestBase->send_stream_ = MS_Init(NULL, 1024*1000);
-    pPTCPTestBase->recv_stream_ = MS_Init(NULL, 1024*1000);
+    pPTCPTestBase->send_stream_ = MS_Init(NULL, 1000000);
+    pPTCPTestBase->recv_stream_ = MS_Init(NULL, 1000000);
 
     pPTCPTestBase->have_connected_ = false;
     pPTCPTestBase->have_disconnected_ = false;
@@ -376,19 +370,19 @@ void UpdateClock(tPseudoTcp* pPTCP, U32 message)
 
 void UpdateLocalClock()
 {
-    //LOG_F(LS_INFO, "UpdateClock(_gpLocal->tcp, MSG_LCLOCK)");
+    //LOG(LS_INFO, "UpdateClock(_gpLocal->tcp, MSG_LCLOCK)");
     UpdateClock(_gpLocal->tcp, MSG_LCLOCK);
 }
 void UpdateRemoteClock()
 {
-    //LOG_F(LS_INFO, "UpdateClock(_gpRemote->tcp, MSG_RCLOCK)");
+    //LOG(LS_INFO, "UpdateClock(_gpRemote->tcp, MSG_RCLOCK)");
     UpdateClock(_gpRemote->tcp, MSG_RCLOCK);
 }
 
 
 void OnMessage(tMessage* message)
 {
-    //LOG_F(LS_INFO, "OnMessage\n");
+    //LOG(LS_INFO, "OnMessage\n");
     //printf("OnMessage message->message_id=%d\n", message->message_id);
     switch (message->message_id) {
     case MSG_LPACKET: {
@@ -420,11 +414,6 @@ void OnMessage(tMessage* message)
         UpdateRemoteClock();
         break;
 
-    case MSG_POST_EVENT:
-            //printf("MSG_POST_EVENT\n");
-            //PTCP_NotifyClock(_gpLocal->tcp, PTCP_Now());
-        break;
-            
     default:
         break;
     }
@@ -480,8 +469,8 @@ void ReadData()
             MS_GetPosition(_gpPTCPTestBase->recv_stream_ , &position);
 
             char pTmp[256] = {0};
-            sprintf(pTmp,"REMOTE: Received: (%d, %zu)", rcvd, position);
-            LOG_F(LS_VERBOSE, pTmp);
+            sprintf(pTmp,"Received: %zu\n",position);
+            LOG(LS_VERBOSE, pTmp);
         }
     } while (rcvd > 0);
 }
@@ -510,10 +499,10 @@ void WriteData(bool* done)
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position + sent);
                 memset(pTmp, 0, 1024);
                 sprintf(pTmp,"Sent: %zu\n", position + sent);
-                LOG_F(LS_VERBOSE, pTmp);
+                LOG(LS_VERBOSE, pTmp);
             } else {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position);
-                LOG_F(LS_INFO, "Flow Controlled");
+                LOG(LS_INFO, "Flow Controlled");
             }
         } else {
             sent = 0;
@@ -526,8 +515,8 @@ void WriteData(bool* done)
 
 void OnTcpReadable_01(tPseudoTcp* tcp)
 {
-    if (tcp == _gpRemote->tcp) { LOG_F(LS_INFO, "_gpRemote->tcp"); }
-    else { LOG_F(LS_INFO, "_gpLocal->tcp"); }
+    if (tcp == _gpRemote->tcp) { LOG(LS_INFO, "_gpRemote->tcp"); }
+    else { LOG(LS_INFO, "_gpLocal->tcp"); }
 
     // Stream bytes to the recv stream as they arrive.
     if (tcp == _gpRemote->tcp) {
@@ -550,15 +539,15 @@ void OnTcpReadable_01(tPseudoTcp* tcp)
 void OnTcpWriteable_01(tPseudoTcp* tcp)
 {
     if (tcp == _gpRemote->tcp) {
-        LOG_F(LS_INFO, "_gpRemote->tcp");
+        LOG(LS_INFO, "_gpRemote->tcp");
     } else {
-        LOG_F(LS_INFO, "_gpLocal->tcp");
+        LOG(LS_INFO, "_gpLocal->tcp");
     }
 
     // Write bytes from the send stream when we can.
     // Shut down when we've sent everything.
     if (tcp == _gpLocal->tcp) {
-        LOG_F(LS_INFO, "Flow Control Lifted");
+        LOG(LS_INFO, "Flow Control Lifted");
         bool done;
         WriteData(&done);
         if (done) {
@@ -572,9 +561,9 @@ void OnTcpOpen_01(tPseudoTcp* pPTCP)
     // Consider ourselves connected when the local side gets OnTcpOpen.
     // OnTcpWriteable isn't fired at open, so we trigger it now.
     if (pPTCP == _gpRemote->tcp) {
-        LOG_F(LS_INFO, "_gpRemote->tcp");
+        LOG(LS_INFO, "_gpRemote->tcp");
     } else {
-        LOG_F(LS_INFO, "_gpLocal->tcp");
+        LOG(LS_INFO, "_gpLocal->tcp");
     }
     if (pPTCP == _gpLocal->tcp) {
         _gpPTCPTestBase->have_connected_ = true;
@@ -591,8 +580,8 @@ void OnTcpClosed_01(tPseudoTcp* pPTCP, U32 error)
     // Consider ourselves closed when the remote side gets OnTcpClosed.
     // TODO: OnTcpClosed is only ever notified in case of error in
     // the current implementation.  Solicited close is not (yet) supported.
-    if (pPTCP == _gpRemote->tcp) { LOG_F(LS_INFO, "_gpRemote->tcp"); }
-    else { LOG_F(LS_INFO, "_gpLocal->tcp"); }
+    if (pPTCP == _gpRemote->tcp) { LOG(LS_INFO, "_gpRemote->tcp"); }
+    else { LOG(LS_INFO, "_gpLocal->tcp"); }
     printf("%s error = %u\n", __func__, error);
     CU_ASSERT_EQUAL(0U, error);
     if (pPTCP == _gpRemote->tcp) {
@@ -601,42 +590,6 @@ void OnTcpClosed_01(tPseudoTcp* pPTCP, U32 error)
     }
 
 }
-    
-    
-// TODO
-void NotifyReadCB(tPseudoTcp *pPTCP, int vIn)
-{
-    //printf("NotifyReadCB\n");
-    // Notify user can read data now;
-    // if we didn't have any data to read before, and now we do, post an event
-    
-//    tMessageData *pData = malloc(sizeof(tMessageData));
-//    memset(pData, 0, sizeof(tMessageData));
-//    pData->pVal = malloc(len+1);
-//    if(!pData->pVal) {
-//        ASSERT(pData->pVal!=NULL);
-//    }
-//    
-//    memset(pData->pVal, 0, len+1);
-//    memcpy(pData->pVal, buffer, len);
-//    pData->len = len;
-  
-    MQueue_Post(
-                _gpPTCPTestBase->msq,
-                NULL, /* tMessageHandler *phandler, */
-                MSG_POST_EVENT,
-                NULL,
-                false);
-                
-}
-
-void NotifyWriteCB(tPseudoTcp *pPTCP, int vIn)
-{
-    //printf("NotifyWriteCB\n");
-    // Notify user can write data now;
-    // if we(FIFO) were full before, and now we're not, post an event
-}
-// ===========
 
 static int seed_ = 7;
 int GetRandom() {
@@ -653,7 +606,7 @@ bool Generate(void* buf, size_t len) {
 uint32_t CreateRandomId() {
     uint32_t id;
     if (!Generate(&id, sizeof(id))) {
-        LOG_F(LS_VERBOSE, "Failed to generate random id!");
+        LOG(LS_VERBOSE, "Failed to generate random id!");
     }
     return id;
 }
@@ -664,16 +617,19 @@ uint32_t CreateRandomId() {
 tWriteResult TcpWritePacket_01(tPseudoTcp* pPTCP, const char* buffer, size_t len)
 {
     char pTmp[1024]= {0};
+    //   if (pPTCP == _gpRemote->tcp) { sprintf(pTmp, "_gpRemote->tcp MSG_RPACKET delay_=%d", _gpPTCPTestBase->delay_);}
+    //   else { sprintf(pTmp, "_gpLocal->tcp MSG_LPACKET delay_=%d", _gpPTCPTestBase->delay_);}
+    //   LOG(LS_VERBOSE, pTmp);
 
     // Randomly drop the desired percentage of packets.
     // Also drop packets that are larger than the configured MTU.
     if (GetRandom() % 100 < (U32)(_gpPTCPTestBase->loss_)) {
     //if (rand() % 100 < (U32)(_gpPTCPTestBase->loss_)) {
-        sprintf(pTmp, "%s: Randomly dropping packet, size=%zu", PTCP_WHOAMI(pPTCP->tcpId), len);
-        LOG_F(LS_VERBOSE, pTmp);
+        sprintf(pTmp, "Randomly dropping packet, size=%zu\n", len);
+        LOG(LS_VERBOSE, pTmp);
     } else if (len > (size_t)(MIN(_gpPTCPTestBase->local_mtu_, _gpPTCPTestBase->remote_mtu_))) {
-        sprintf(pTmp, "Dropping packet that exceeds path MTU, size=%zu", len);
-        LOG_F(LS_VERBOSE, pTmp);
+        sprintf(pTmp, "Dropping packet that exceeds path MTU, size=%zu\n", len);
+        LOG(LS_VERBOSE, pTmp);
     } else {
         int id = (pPTCP == _gpLocal->tcp) ? MSG_RPACKET : MSG_LPACKET;
 
@@ -738,16 +694,16 @@ void TestTransfer_01(int size)
 
 
     EXPECT_TRUE_WAIT(_gpPTCPTestBase->have_connected_, kConnectTimeoutMs);
-    printf("line:%d _gpPTCPTestBase->have_connected_=%d\n\n", __LINE__, _gpPTCPTestBase->have_connected_);
+    printf("line:%d _gpPTCPTestBase->have_connected_=%d\n", __LINE__, _gpPTCPTestBase->have_connected_);
     // Sending will start from OnTcpWriteable and complete when all data has
     // been received.
     EXPECT_TRUE_WAIT(_gpPTCPTestBase->have_disconnected_, kTransferTimeoutMs);
-    printf("line:%d _gpPTCPTestBase->have_disconnected_=%d\n\n", __LINE__, _gpPTCPTestBase->have_disconnected_);
+    printf("line:%d _gpPTCPTestBase->have_disconnected_=%d\n", __LINE__, _gpPTCPTestBase->have_disconnected_);
 
     elapsed = TimeSince(start);
 
     MS_GetSize(_gpPTCPTestBase->recv_stream_, &received);
-    printf("line:%d elapsed=%d, (size,received)=(%d,%zu)\n\n", __LINE__, elapsed, size, received);
+    printf("line:%d elapsed=%d, (size,received)=(%d,%zu)\n", __LINE__, elapsed, size, received);
     
     // Ensure we closed down OK and we got the right data.
     // TODO: Ensure the errors are cleared properly.
@@ -807,7 +763,7 @@ void TestTransfer_01(int size)
 
 void OnMessage_01_01(tMessage* message)
 {
-    //LOG_F(LS_INFO, "OnMessage_01_01\n");
+    //LOG(LS_INFO, "OnMessage_01_01\n");
 
     static int i=0;
     if(i==0) {
@@ -1508,7 +1464,6 @@ void PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize(void)
     SetOptSndBuf(900);
     TestTransfer_01(1024 * 1000);
     CU_ASSERT_EQUAL(900u, EstimateSendWindowSize());
-    printf("\nEstimateReceiveWindowSize()=%d\n",EstimateReceiveWindowSize());
     PseudoTcpTestBase_Destroy(pTest);
 }
 
@@ -1526,7 +1481,6 @@ void PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize(void)
     SetLocalOptRcvBuf(100000);
     TestTransfer_01(1024 * 1000);
     CU_ASSERT_EQUAL(100000u, EstimateReceiveWindowSize());
-    printf("\nEstimateReceiveWindowSize()=%d\n",EstimateReceiveWindowSize());
     PseudoTcpTestBase_Destroy(pTest);
 }
 

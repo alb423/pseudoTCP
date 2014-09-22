@@ -158,6 +158,16 @@ S32 TimeUntil(U32 later)
     return TimeDiff(later, Time());
 }
 
+static U32 g_start = 0;
+U32 LogStartTime_Init() {
+    g_start = Time();
+    return g_start;
+}
+    
+U32 LogStartTime() {
+    return g_start;
+}
+
 bool TimeIsLater(U32 earlier, U32 later)
 {
 #if EFFICIENT_IMPLEMENTATION
