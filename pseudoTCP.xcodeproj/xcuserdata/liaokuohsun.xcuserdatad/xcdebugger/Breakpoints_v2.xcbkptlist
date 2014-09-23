@@ -101,12 +101,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "test/pseudo_tcp_unittest.c"
-            timestampString = "432789878.465761"
+            timestampString = "433146339.022758"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "368"
-            endingLineNumber = "368"
-            landmarkName = "UpdateClock()"
+            startingLineNumber = "386"
+            endingLineNumber = "386"
+            landmarkName = "UpdateRemoteClock()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -155,22 +155,6 @@
             startingLineNumber = "1244"
             endingLineNumber = "1244"
             landmarkName = "Event_WakeUp()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "test/message_queue.c"
-            timestampString = "433059268.072413"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1264"
-            endingLineNumber = "1264"
-            landmarkName = "Event_OnPreEvent()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -277,13 +261,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "test/pseudo_tcp_unittest.c"
-            timestampString = "433060879.025699"
+            timestampString = "433146339.022758"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "424"
-            endingLineNumber = "424"
-            landmarkName = "OnMessage()"
-            landmarkType = "7">
+            startingLineNumber = "442"
+            endingLineNumber = "442">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -293,13 +275,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "test/pseudo_tcp_unittest.c"
-            timestampString = "433060963.619699"
+            timestampString = "433146339.022758"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "812"
-            endingLineNumber = "812"
-            landmarkName = "OnMessage_01_01()"
-            landmarkType = "7">
+            startingLineNumber = "831"
+            endingLineNumber = "831">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -331,6 +311,22 @@
             startingLineNumber = "1145"
             endingLineNumber = "1145"
             landmarkName = "PTCP_Process()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "fifo_buffer.c"
+            timestampString = "433145316.869126"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "104"
+            endingLineNumber = "104"
+            landmarkName = "FIFO_Create()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

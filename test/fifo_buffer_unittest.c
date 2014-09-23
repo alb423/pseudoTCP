@@ -53,11 +53,11 @@ extern "C" {
 /*** PUBLIC FUNCTION DEFINITIONS *********************************************/
 
 // Test FIFO
-void NotifyRead(int i)
+void NotifyRead(void *pIn, int i)
 {
     /*printf("NotifyRead\n")*/;
 }
-void NotifyWrite(int i)
+void NotifyWrite(void *pIn, int i)
 {
     /*printf("NotifyWrite\n")*/;
 }

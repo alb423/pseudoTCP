@@ -227,7 +227,7 @@ U32 PTCP_Now()
 }
 
 
-tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, tFIFO_CB *pNotifyReadCB, tFIFO_CB *pNotifyWriteCB, U32 conv)
+tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, tFIFO_CB pNotifyReadCB, tFIFO_CB pNotifyWriteCB, U32 conv)
 {
 
     tPseudoTcp *pPTCP = NULL;
@@ -335,8 +335,8 @@ void PTCP_Destroy(tPseudoTcp *pPTCP)
         if(pPTCP->m_slist) {
             if(pPTCP->m_slist->count!=0) {
                 SEGMENT_LIST_Dump(pPTCP->m_slist);
-                tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_slist);
-                printf("==> seq=%d len=%d xmit=%d\n", vpRSSeg->seq, vpRSSeg->len, vpRSSeg->xmit);
+                //tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_slist);
+                //printf("==> seq=%d len=%d xmit=%d\n", vpRSSeg->seq, vpRSSeg->len, vpRSSeg->xmit);
             }
             while(pPTCP->m_slist->count!=0) {
                 tRSSegment * vpRSSeg = SEGMENT_LIST_front(pPTCP->m_slist);

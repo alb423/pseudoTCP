@@ -151,7 +151,7 @@ typedef struct tPseudoTcp {
 } tPseudoTcp;
 
 /*** PUBLIC FUNCTION PROTOTYPES **********************************************/
-tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, tFIFO_CB *pNotifyReadCB, tFIFO_CB *pNotifyWriteCB, U32 conv);
+tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, tFIFO_CB pNotifyReadCB, tFIFO_CB pNotifyWriteCB, U32 conv);
 void PTCP_Destroy(tPseudoTcp *pPTCP);
 
 void PTCP_GetOption(tPseudoTcp *pPTCP, Option opt, int* value);

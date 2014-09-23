@@ -1273,7 +1273,7 @@ void Event_OnEvent(tEvent *pEvent, uint32_t ff, int err) {
 bool Event_Wait(tEvent *pEvent, int cmsWait, bool process_io)
 {
     //printf("Event_Wait\n");
-    static vEventWaitCnt=0;
+    static int vEventWaitCnt=0;
     // Calculate timing information
     if(!pEvent)
         return false;

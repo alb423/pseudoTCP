@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     CU_pSuite pSuite;
     CU_initialize_registry();
 
-#if 0
+#if 1
     // Test Successful
     pSuite = CU_add_suite("Test FIFO", testInit, testClean);
     CU_add_test(pSuite, "FifoBufferTest_FullBufferCheck", FifoBufferTest_FullBufferCheck);
@@ -106,21 +106,16 @@ int main(int argc, char **argv)
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendLocalNoWindowScale);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendBothUseWindowScale);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendLargeInFlight);
-    //CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendBothUseLargeWindowScale);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendBothUseLargeWindowScale);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendSmallReceiveBuffer);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendVerySmallReceiveBuffer);
-    
-
     
     
 #else
 
     pSuite = CU_add_suite("Test case need to be fixed...", testInit, testClean);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendBothUseLargeWindowScale);
     
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize);
-
+    
 //    // Ping-pong (request/response) tests
 //    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong1xMtu);
 //    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong3xMtu);

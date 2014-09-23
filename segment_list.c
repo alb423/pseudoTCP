@@ -139,8 +139,9 @@ void SEGMENT_LIST_push_front(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 // Removes the first element in the list container.
 void SEGMENT_LIST_pop_front(tMI_DLIST *pDList)
 {
-    tMI_DLNODE *pNode = MI_DlPopHead(pDList);
-    LOG_ARG(LS_SENSITIVE, pNode);
+    MI_DlPopHead(pDList);
+//    tMI_DLNODE *pNode = MI_DlPopHead(pDList);
+//    LOG_ARG(LS_SENSITIVE, pNode);
 }
 
 // Adds a new element at the end of the list container, after its current last element.
