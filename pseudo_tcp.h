@@ -178,7 +178,7 @@ bool PTCP_NotifyPacket(tPseudoTcp *pPTCP, const U8 * buffer, size_t len);
 // Call this to determine the next time NotifyClock should be called.
 // Returns false if the socket is ready to be destroyed.
 bool PTCP_GetNextClock(tPseudoTcp *pPTCP, U32 now, long *timeout);
-
+bool PTCP_IsReceiveBufferFull(tPseudoTcp *pPTCP);
 void PTCP_DisableWindowScale(tPseudoTcp *pPTCP);
 
 U32 PTCP_GetCongestionWindow(tPseudoTcp *pPTCP);

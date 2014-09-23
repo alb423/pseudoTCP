@@ -70,7 +70,15 @@ static int testClean(void)
 }
 void testAssertTrue(void);
 
+void unittest_main();
+
 int main(int argc, char **argv)
+{
+    unittest_main();
+    return 0;
+}
+
+void unittest_main()
 {
     CU_pSuite pSuite;
     CU_initialize_registry();
@@ -110,23 +118,21 @@ int main(int argc, char **argv)
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendSmallReceiveBuffer);
     CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendVerySmallReceiveBuffer);
     
+    // Ping-pong (request/response) tests
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong1xMtu);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong3xMtu);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtu);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtuWithAckDelayOff);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtuWithNaglingOff);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegments);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithNaglingOff);
+    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithAckDelayOff);
     
 #else
 
     pSuite = CU_add_suite("Test case need to be fixed...", testInit, testClean);
     
-    
-//    // Ping-pong (request/response) tests
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong1xMtu);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong3xMtu);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtu);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtuWithAckDelayOff);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtuWithNaglingOff);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegments);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithNaglingOff);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithAckDelayOff);
-//    
-//    // Test Receive Window
+    // Test Receive Window
 //    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestReceiveWindow);
 //    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize);
 //    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize);
@@ -137,7 +143,6 @@ int main(int argc, char **argv)
     //CU_console_run_tests();
     CU_basic_run_tests();
     CU_cleanup_registry();
-    return 0;
 }
 
 

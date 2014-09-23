@@ -1466,7 +1466,7 @@ void adjustMTU(tPseudoTcp *pPTCP)
 }
 
 
-bool isReceiveBufferFull(tPseudoTcp *pPTCP)
+bool PTCP_IsReceiveBufferFull(tPseudoTcp *pPTCP)
 {
     size_t available_space = 0;
     FIFO_GetWriteRemaining(pPTCP->m_rbuf, &available_space);
