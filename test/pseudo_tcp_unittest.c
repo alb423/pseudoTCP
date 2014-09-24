@@ -191,8 +191,8 @@ tPseudoTcp *PseudoTcpTest_Init(U32 conv, U8 vTcpId, tOnTcpReadableCB pReadableCB
     vxNotify.OnTcpClosed     = (tOnTcpClosedCB)OnTcpClosed;
     vxNotify.TcpWritePacket  = (tTcpWritePacketCB)TcpWritePacket;
     
-    pPseudoTcp = PTCP_Init(&vxNotify, (tFIFO_CB)NotifyReadCB, (tFIFO_CB)NotifyWriteCB, conv);
-    
+    //pPseudoTcp = PTCP_Init(&vxNotify, (tFIFO_CB)NotifyReadCB, (tFIFO_CB)NotifyWriteCB, conv);
+    pPseudoTcp = PTCP_Init(&vxNotify, (tFIFO_CB)pReadableCB, (tFIFO_CB)pWirteableCB, conv);
     // For Debug
     pPseudoTcp->tcpId = vTcpId;
     return pPseudoTcp;
@@ -279,7 +279,7 @@ void PseudoTcpTestBase_Destroy(tPseudoTcpForTestBase *pPTCPTestBase)
                     if(pPQNode) {
                         tDelayMessage *vpTxt;
                         vpTxt = MI_NODEENTRY(pPQNode, tDelayMessage, PQNode);
-                        printf("\t0x%08x 0x%08x, num=%d , msg=0x%08x\n",(U32)pPQNode, (U32)&vpTxt->PQNode, vpTxt->num, (U32)vpTxt->pMsg);
+                        printf("\t0x%08x 0x%08x, num=%d, msg=0x%08x msgid=%d\n",(U32)pPQNode, (U32)&vpTxt->PQNode, vpTxt->num, (U32)vpTxt->pMsg, vpTxt->pMsg->message_id);
 
                         if(pPQNode->h.next)
                             pPQNode = pPQNode->h.next;
@@ -295,11 +295,6 @@ void PseudoTcpTestBase_Destroy(tPseudoTcpForTestBase *pPTCPTestBase)
         }
         
 #endif
-        
-//        pthread_t threadId =  pPTCPTestBase->local_->msq->thread;
-//        pthread_join(threadId, NULL);
-//        threadId =  pPTCPTestBase->remote_->msq->thread;
-//        pthread_join(threadId, NULL);
         
         PseudoTcpTest_Destroy(pPTCPTestBase->local_);
         PseudoTcpTest_Destroy(pPTCPTestBase->remote_);
@@ -412,20 +407,32 @@ void OnMessage_01(tMessage* message)
     switch (message->message_id) {
     case MSG_LPACKET: {
         // copy data here
-        U8 *pData = malloc(message->pData->len);
-        memcpy(pData, message->pData->pVal, message->pData->len);
-        PTCP_NotifyPacket(_gpLocal, pData, message->pData->len);
-        UpdateLocalClock();
-        free(pData);
+        if(message->pData) {
+            U8 *pData = malloc(message->pData->len);
+            memcpy(pData, message->pData->pVal, message->pData->len);
+            PTCP_NotifyPacket(_gpLocal, pData, message->pData->len);
+            UpdateLocalClock();
+            free(pData);
+        }
+        else {
+            //PTCP_NotifyPacket(_gpLocal, pData, message->pData->len);
+            UpdateLocalClock();
+        }
         break;
     }
 
     case MSG_RPACKET: {
-        U8 *pData = malloc(message->pData->len);
-        memcpy(pData, message->pData->pVal, message->pData->len);
-        PTCP_NotifyPacket(_gpRemote, pData, message->pData->len);
-        UpdateRemoteClock();
-        free(pData);
+        if(message->pData) {
+            U8 *pData = malloc(message->pData->len);
+            memcpy(pData, message->pData->pVal, message->pData->len);
+            PTCP_NotifyPacket(_gpRemote, pData, message->pData->len);
+            UpdateRemoteClock();
+            free(pData);
+        }
+        else {
+            //PTCP_NotifyPacket(_gpLocal, pData, message->pData->len);
+            UpdateLocalClock();
+        }
         break;
     }
 
@@ -540,8 +547,7 @@ void Vector_Push_Back(tVector *pVec, U32 val)
 {
     if(pVec->index < pVec->size-1)
     {
-        pVec->index++;
-        pVec->pVal[pVec->index] = val;
+        pVec->pVal[pVec->index++] = val;
     }
     else
     {
@@ -950,7 +956,7 @@ void WriteData_01(bool* done)
             if (sent != -1) {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position + sent);
                 memset(pTmp, 0, 1024);
-                sprintf(pTmp,"Sent: %zu\n", position + sent);
+                sprintf(pTmp,"Sent: %zu", position + sent);
                 LOG_F(LS_VERBOSE, pTmp);
             } else {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position);
@@ -1448,7 +1454,7 @@ void WriteData_02() {
             if (sent != -1) {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position + sent);
                 memset(pTmp, 0, 1024);
-                sprintf(pTmp,"Sent: %zu\n", position + sent);
+                sprintf(pTmp,"Sent: %zu", position + sent);
                 LOG_F(LS_VERBOSE, pTmp);
             } else {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position);
@@ -1751,10 +1757,9 @@ void ReadUntilIOPending(U32 messageId)
         }
     } while (rcvd > 0);
     
-    MS_GetPosition(_gpPTCPTestBase->recv_stream_ , &position);
     //recv_stream_.GetPosition(&position);
-    
     //recv_position_.push_back(position);
+    MS_GetPosition(_gpPTCPTestBase->recv_stream_ , &position);
     Vector_Push_Back(_gpPseudoTcpTestReceiveWindow->recv_position_, (U32)position);
     
     // Disconnect if we have done two transfers.
@@ -1782,7 +1787,7 @@ void WriteData_03(U32 messageId) {
             if (sent != -1) {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position + sent);
                 memset(pTmp, 0, 1024);
-                sprintf(pTmp,"Sent: %zu\n", position + sent);
+                sprintf(pTmp,"Sent: %zu", position + sent);
                 LOG_F(LS_VERBOSE, pTmp);
             } else {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position);
@@ -1798,7 +1803,10 @@ void WriteData_03(U32 messageId) {
     //int message_queue_size = static_cast<int>(rtc::Thread::Current()->size());
     
     size_t message_queue_size = MQueue_Size(_gpPTCPTestBase->msq);
-    
+    printf("MQueue_Size(_gpPTCPTestBase->msq)=%zu\n",MQueue_Size(_gpPTCPTestBase->msq));
+    printf("size (send_position, recv_position) = (%d, %d)\n",\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_));
     // The message queue will always have at least 2 messages, an RCLOCK and
     // an LCLOCK, since they are added back on the delay queue at the same time
     // they are pulled off and therefore are never really removed.
@@ -1807,7 +1815,8 @@ void WriteData_03(U32 messageId) {
         // after giving those messages time to process, which should free up the
         // send buffer.
         //rtc::Thread::Current()->PostDelayed(10, this, MSG_WRITE);
-        MQueue_PostDelayed(_gpPTCPTestBase->msq, (int)10, messageId, NULL);
+        MQueue_PostDelayed(_gpPTCPTestBase->msq, (int)10, MSG_WRITE, NULL);
+        //MQueue_PostDelayed(_gpPTCPTestBase->msq, (int)10, messageId, NULL);
     } else {
         
         if (!PTCP_IsReceiveBufferFull(_gpRemote)) {
@@ -1819,7 +1828,6 @@ void WriteData_03(U32 messageId) {
             
         }
         MS_GetPosition(_gpPTCPTestBase->send_stream_ ,&position);
-        //send_position_.push_back(position);
         Vector_Push_Back(_gpPseudoTcpTestReceiveWindow->send_position_, (U32)position);
 
         // Drain the receiver buffer.
@@ -1830,13 +1838,14 @@ void WriteData_03(U32 messageId) {
     
 void TestTransfer_03(int size) {
     U32 start;
+    int i;
     bool bFlag = false;
     
     // Create some dummy data to send.
     bFlag = MS_ReserveSize(_gpPTCPTestBase->send_stream_, size);
     CU_ASSERT_EQUAL(true, bFlag);
 
-    for (int i = 0; i < size; ++i) {
+    for (i = 0; i < size; ++i) {
         char ch = (char)(i % 255+1);
         MS_Write(_gpPTCPTestBase->send_stream_, &ch, 1, NULL, NULL);
     }
@@ -1859,8 +1868,6 @@ void TestTransfer_03(int size) {
     
     CU_ASSERT_EQUAL(2u, Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_));
     CU_ASSERT_EQUAL(2u, Vector_Size(_gpPseudoTcpTestReceiveWindow->recv_position_));
-    //CU_ASSERT_EQUAL(2u, send_position_.size());
-    //CU_ASSERT_EQUAL(2u, recv_position_.size());
     
     const size_t estimated_recv_window = EstimateReceiveWindowSize();
     
@@ -1870,6 +1877,17 @@ void TestTransfer_03(int size) {
     const size_t send_position_diff = _gpPseudoTcpTestReceiveWindow->send_position_->pVal[1] - _gpPseudoTcpTestReceiveWindow->send_position_->pVal[0];
     //EXPECT_GE(1024u, estimated_recv_window - send_position_diff);
     CU_ASSERT_EQUAL(1, 1024u >= (estimated_recv_window - send_position_diff));
+    
+    printf(" send position %d %d\n receive position %d %d\n",\
+    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[0],\
+    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[1],\
+    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[0],\
+    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[1]);
+    
+    printf("size (send_position,recv_position) = (%d, %d) send_position_diff=%zu, estimated_recv_window=%zu\n",\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->recv_position_),\
+           send_position_diff, estimated_recv_window);
     
     // Receiver drained the receive window twice.
     //EXPECT_EQ(2 * estimated_recv_window, _gpPseudoTcpTestReceiveWindow->recv_position_[1]);
@@ -1910,8 +1928,8 @@ tPseudoTcpTestReceiveWindow *PseudoTcpTestReceiveWindow_Init(void)
 
 void PseudoTcpTestReceiveWindow_Destroy(tPseudoTcpTestReceiveWindow *pIn)
 {
-    ;
-    
+    free(_gpPseudoTcpTestReceiveWindow);
+    PseudoTcpTestBase_Destroy(_gpPTCPTestBase);
 }
     
 
@@ -1929,7 +1947,8 @@ void PseudoTcpTestReceiveWindow_TestReceiveWindow(void)
     SetRemoteMtu(1500);
     SetOptNagling(false);
     SetOptAckDelay(0);
-    TestTransfer_03(1024 * 1000);
+    TestTransfer_03(1024 * 10);
+    //TestTransfer_03(1024 * 1000);
     PseudoTcpTestReceiveWindow_Destroy(pTest);
 }
 

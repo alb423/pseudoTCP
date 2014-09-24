@@ -401,13 +401,12 @@ void PTCP_NotifyClock(tPseudoTcp *pPTCP, U32 now)
         } else {
             // Note: (pPTCP->m_slist.front().xmit == 0)) {
             // retransmit segments
-//#if _DEBUGMSG >= _DBG_NORMAL
-#if 1
+#if _DEBUGMSG >= _DBG_NORMAL
             char pTmp[1024]= {0};
             sprintf(pTmp, "%s: timeout retransmit (rto: %d) (rto_base: %d) (now: %d) (dup_acks: %d)",\
                     PTCP_WHOAMI(pPTCP->tcpId), pPTCP->m_rx_rto, pPTCP->m_rto_base, now, (unsigned)pPTCP->m_dup_acks);
             LOG_F(LS_VERBOSE, pTmp);
-#endif // _DEBUGMSG
+#endif
             
             if (!transmit(pPTCP, SEGMENT_LIST_begin(pPTCP->m_slist), now)) {
                 closedown(pPTCP, ECONNABORTED);
@@ -914,7 +913,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
                 pPTCP->m_rx_rto = bound(MIN_RTO, pPTCP->m_rx_srtt + (U32)MAX(1, 4 * pPTCP->m_rx_rttvar), MAX_RTO);
 #if _DEBUGMSG >= _DBG_VERBOSE
                 memset(pTmp, 0, 1024);
-                sprintf(pTmp, "rtt: %d  srtt: %d  rto: %d\n", rtt, pPTCP->m_rx_srtt, pPTCP->m_rx_rto);
+                sprintf(pTmp, "rtt: %d  srtt: %d  rto: %d", rtt, pPTCP->m_rx_srtt, pPTCP->m_rx_rto);
                 LOG(LS_VERBOSE, pTmp);
 #endif // _DEBUGMSG
             } else {
@@ -929,12 +928,11 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 
         pPTCP->m_rto_base = (pPTCP->m_snd_una == pPTCP->m_snd_nxt) ? 0 : now;
         
-        //TODO: check here
-        if ((!pPTCP->m_rto_base) || (nAcked ==0))
-        {
-            LOG_F(LS_VERBOSE, "check pPTCP->m_rto_base\n");
-        }
-            
+//        if ((!pPTCP->m_rto_base) || (nAcked ==0))
+//        {
+//            LOG_F(LS_VERBOSE, "check pPTCP->m_rto_base\n");
+//        }
+        
         //pPTCP->m_sbuf.ConsumeReadData(nAcked);
         FIFO_ConsumeReadData(pPTCP->m_sbuf, nAcked);
 
@@ -1339,7 +1337,7 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
             bFirst = false;
 
             char pTmpBuf[1024]= {0};
-            sprintf(pTmpBuf, "\n[cwnd: %d nWindow: %d nInFlight: %d nAvailable: %d nQueued: %zu nEmpty: %zu ssthresh: %d]\n",\
+            sprintf(pTmpBuf, "[cwnd: %d nWindow: %d nInFlight: %d nAvailable: %d nQueued: %zu nEmpty: %zu ssthresh: %d]",\
                     pPTCP->m_cwnd, nWindow, nInFlight, nAvailable, snd_buffered, available_space, pPTCP->m_ssthresh);
             LOG(LS_VERBOSE, pTmpBuf);
         }
@@ -1351,9 +1349,9 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
 
             // If this is an immediate ack, or the second delayed ack
             if ((sflags == sfImmediateAck) || pPTCP->m_t_ack) {
-                char pTmp[1024];
-                sprintf(pTmp, "%s: sfImmediateAck, attempt() -> PTCP_Packet() -> TcpWritePacket()", PTCP_WHOAMI(pPTCP->tcpId));
-                LOG_F(LS_VERBOSE, pTmp);
+//                char pTmp[1024];
+//                sprintf(pTmp, "%s: sfImmediateAck, attempt() -> PTCP_Packet() -> TcpWritePacket()", PTCP_WHOAMI(pPTCP->tcpId));
+//                LOG_F(LS_VERBOSE, pTmp);
                 PTCP_Packet(pPTCP, pPTCP->m_snd_nxt, 0, 0, 0);
             } else {
                 pPTCP->m_t_ack = PTCP_Now();
@@ -1373,11 +1371,11 @@ void attemptSend(tPseudoTcp *pPTCP, SendFlags sflags)
         //SList::iterator it = pPTCP->m_slist.begin();
         tRSSegment *it = SEGMENT_LIST_begin(pPTCP->m_slist);
         
-#if _DEBUGMSG >= _DBG_VERBOSE
-        char pTmpBuf[1024]= {0};
-        sprintf(pTmpBuf, "%s pPTCP->m_slist->count = %d\n",__func__ ,pPTCP->m_slist->count);
-        LOG(LS_VERBOSE, pTmpBuf);
-#endif // _DEBUGMSG
+//#if _DEBUGMSG >= _DBG_VERBOSE
+//        char pTmpBuf[1024]= {0};
+//        sprintf(pTmpBuf, "%s pPTCP->m_slist->count = %d",__func__ ,pPTCP->m_slist->count);
+//        LOG(LS_VERBOSE, pTmpBuf);
+//#endif // _DEBUGMSG
 
         if(it) {
             SEGMENT_LIST_Dump(pPTCP->m_slist);

@@ -289,7 +289,11 @@ tDelayMessage * PQueue_Pop(tMI_PQUEUE *pQ)
 {
     tMI_PQNODE *pPQNode;
     pPQNode = MI_PQPopHead(pQ);
-    //printf("PQueue_Pop() head=0x%08x tail=0x%08x node:0x%08x count=%d\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode, (U32)pQ->count);
+    
+    char pTmp[1024];
+    sprintf(pTmp, "PQueue_Pop(0x%08x)  head=0x%08x tail=0x%08x count=%d\n", (U32)pPQNode, (U32)pQ->head, (U32)pQ->tail,  (U32)pQ->count);
+    LOG(LS_VERBOSE, pTmp);
+   
     PQueue_Dump(pQ);
     if(pPQNode) {
         tDelayMessage *vpTxt;
@@ -303,7 +307,10 @@ tDelayMessage * PQueue_Pop(tMI_PQUEUE *pQ)
 void PQueue_Push(tMI_PQUEUE *pQ, tMI_PQNODE *pPQNode)
 {
     MI_PQPushTail(pQ, pPQNode);
-    //printf("PQueue_Push() head=0x%08x tail=0x%08x node:0x%08x count=%d\n", (U32)pQ->head, (U32)pQ->tail, (U32)pPQNode, (U32)pQ->count);
+    
+    char pTmp[1024];
+    sprintf(pTmp, "PQueue_Push(0x%08x)  head=0x%08x tail=0x%08x count=%d\n", (U32)pPQNode, (U32)pQ->head, (U32)pQ->tail,  (U32)pQ->count);
+    LOG(LS_VERBOSE, pTmp);
     PQueue_Dump(pQ);
 }
 
@@ -546,7 +553,10 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
 #endif
 
                     pQ->count--;
-                    //printf("PQueue_Erase() after erase, count=%d head=0x%08x tail=0x%08x\n", pQ->count, (U32)pQ->head, (U32)pQ->tail);
+                    
+                    char pTmp[1024];
+                    sprintf(pTmp, "PQueue_Erase(0x%08x)  head=0x%08x tail=0x%08x count=%d \n", (U32)pNode,(U32)pQ->head, (U32)pQ->tail, pQ->count);
+                    LOG(LS_VERBOSE, pTmp);
 
                     PQueue_Dump(pQ);
 
@@ -602,11 +612,7 @@ tMessageQueue * MQueue_Init(tOnMessageCB pCB)
         // create a thread to handle message received (pass the msg to pOnMessageCB())
         pthread_mutex_init(&_mutex, NULL);
         pthread_cond_init(&_cond, NULL);
-//      pthread_attr_t attr;
-//      pthread_attr_init(&attr);
-//      pthread_create(&vpIn->thread, &attr, PreRun, vpIn);
-//      pthread_attr_destroy(&attr);
-
+        
         return vpIn;
     }
     return NULL;
@@ -614,20 +620,10 @@ tMessageQueue * MQueue_Init(tOnMessageCB pCB)
 
 void MQueue_Destroy(tMessageQueue *vpIn)
 {
-    // TODO: send signal to the MQueue thread to destroy MQueue
-
     if(vpIn) {
         MQueue_Quit(vpIn);
         pthread_mutex_destroy(&_mutex);
         pthread_cond_destroy(&_cond);
-
-//#if 1
-//      pthread_exit(NULL);
-//#else
-//      int vReturn;
-//      void *res;
-//      vReturn = pthread_join(&vpIn->thread, &res);
-//#endif
 
         Event_Destroy(&vpIn->event);
 
