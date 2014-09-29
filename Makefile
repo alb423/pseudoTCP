@@ -33,14 +33,14 @@ all: pseudoTCP test
 pseudoTCP: $(OBJS)
 	$(AR) cr libpseudoTCP.a $(OBJS) 	
 	
-test: pseudoTCP $(OBJS)
+test: pseudoTCP $(TEST_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(TEST_OBJS) $(TEST_LIBS)
 	
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
    
 clean:
-	rm -rf $(OBJS) test libpseudoTCP.a
+	rm -rf $(OBJS) $(TEST_OBJS) test libpseudoTCP.a
 
 	
 
