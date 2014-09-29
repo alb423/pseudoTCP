@@ -35,7 +35,7 @@ extern "C" {
 #include "mi_types.h"
 #include "mi_util.h"
 #include "pseudo_tcp.h"
-#include "message_queue.h"
+#include "test/message_queue.h"
 /*** MACROS ******************************************************************/
 
 

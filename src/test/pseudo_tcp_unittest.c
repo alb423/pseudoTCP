@@ -36,10 +36,10 @@ extern "C" {
 #include <CUnit/CUnit.h>
 #include <CUnit/Console.h>
 #include "mi_types.h"
-#include "memory_stream.h"
-#include "message_queue.h"
 #include "pseudo_tcp.h"
-
+#include "test/memory_stream.h"
+#include "test/message_queue.h"
+    
 /*** MACROS ******************************************************************/
 #define LOCAL  0
 #define REMOTE 1

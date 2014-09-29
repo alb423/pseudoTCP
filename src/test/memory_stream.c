@@ -35,7 +35,7 @@ extern "C" {
 #include <CUnit/Console.h>
 #include "mi_types.h"
 #include "mi_util.h"
-#include "memory_stream.h"
+#include "test/memory_stream.h"
 /*** MACROS ******************************************************************/
 #if __LINUX__
 #define ALIGNP(p, t) ((U8 *)((((U32)(p) + ((t) - 1)) & ~((t) - 1))))

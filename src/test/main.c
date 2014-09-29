@@ -38,10 +38,10 @@ extern "C" {
 #include "fifo_buffer.h"
 
 
-#include "fifo_buffer_unittest.h"
-#include "segment_list_unittest.h"
-#include "memory_stream_unittest.h"
-#include "pseudo_tcp_unittest.h"
+#include "test/fifo_buffer_unittest.h"
+#include "test/segment_list_unittest.h"
+#include "test/memory_stream_unittest.h"
+#include "test/pseudo_tcp_unittest.h"
 
 /*** MACROS ******************************************************************/
 
