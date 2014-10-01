@@ -83,7 +83,6 @@ void unittest_main()
     CU_pSuite pSuite;
     CU_initialize_registry();
 
-#if 1
     // Test Successful
     pSuite = CU_add_suite("Test FIFO", testInit, testClean);
     CU_add_test(pSuite, "FifoBufferTest_FullBufferCheck", FifoBufferTest_FullBufferCheck);
@@ -102,42 +101,39 @@ void unittest_main()
     CU_add_test(pSuite, "MemoryStreamTest_TestTransfer", MemoryStreamTest_TestTransfer);
 
     // Basic end-to-end data transfer tests
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSend);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithDelay);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithLoss);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithDelayAndLoss);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithLossAndOptNaglingOff);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithLossAndOptAckDelayOff);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithDelayAndOptNaglingOff);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendWithDelayAndOptAckDelayOff);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendRemoteNoWindowScale);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendLocalNoWindowScale);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendBothUseWindowScale);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendLargeInFlight);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendBothUseLargeWindowScale);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendSmallReceiveBuffer);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTest_TestSendVerySmallReceiveBuffer);
+    pSuite = CU_add_suite("PseudoTcpTest", testInit, testClean);
+    CU_add_test(pSuite, "TestSend", PseudoTcpTest_TestSend);
+    CU_add_test(pSuite, "TestSendWithDelay", PseudoTcpTest_TestSendWithDelay);
+    CU_add_test(pSuite, "TestSendWithLoss", PseudoTcpTest_TestSendWithLoss);
+    CU_add_test(pSuite, "TestSendWithDelayAndLoss", PseudoTcpTest_TestSendWithDelayAndLoss);
+    CU_add_test(pSuite, "TestSendWithLossAndOptNaglingOff", PseudoTcpTest_TestSendWithLossAndOptNaglingOff);
+    CU_add_test(pSuite, "TestSendWithLossAndOptAckDelayOff", PseudoTcpTest_TestSendWithLossAndOptAckDelayOff);
+    CU_add_test(pSuite, "TestSendWithDelayAndOptNaglingOff", PseudoTcpTest_TestSendWithDelayAndOptNaglingOff);
+    CU_add_test(pSuite, "TestSendWithDelayAndOptAckDelayOff", PseudoTcpTest_TestSendWithDelayAndOptAckDelayOff);
+    CU_add_test(pSuite, "TestSendRemoteNoWindowScale", PseudoTcpTest_TestSendRemoteNoWindowScale);
+    CU_add_test(pSuite, "TestSendLocalNoWindowScale", PseudoTcpTest_TestSendLocalNoWindowScale);
+    CU_add_test(pSuite, "TestSendBothUseWindowScale", PseudoTcpTest_TestSendBothUseWindowScale);
+    CU_add_test(pSuite, "TestSendLargeInFlight", PseudoTcpTest_TestSendLargeInFlight);
+    CU_add_test(pSuite, "TestSendBothUseLargeWindowScale", PseudoTcpTest_TestSendBothUseLargeWindowScale);
+    CU_add_test(pSuite, "TestSendSmallReceiveBuffer", PseudoTcpTest_TestSendSmallReceiveBuffer);
+    CU_add_test(pSuite, "TestSendVerySmallReceiveBuffer", PseudoTcpTest_TestSendVerySmallReceiveBuffer);
     
     // Ping-pong (request/response) tests
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong1xMtu);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong3xMtu);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtu);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtuWithAckDelayOff);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPong2xMtuWithNaglingOff);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegments);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithNaglingOff);
-    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithAckDelayOff);
-    
-#else
-
-    pSuite = CU_add_suite("Test case need to be fixed...", testInit, testClean);
+    pSuite = CU_add_suite("PseudoTcpTestPingPong", testInit, testClean);
+    CU_add_test(pSuite, "TestPingPong1xMtu", PseudoTcpTestPingPong_TestPingPong1xMtu);
+    CU_add_test(pSuite, "TestPingPong3xMtu", PseudoTcpTestPingPong_TestPingPong3xMtu);
+    CU_add_test(pSuite, "TestPingPong2xMtu", PseudoTcpTestPingPong_TestPingPong2xMtu);
+    CU_add_test(pSuite, "TestPingPong2xMtuWithAckDelayOff", PseudoTcpTestPingPong_TestPingPong2xMtuWithAckDelayOff);
+    CU_add_test(pSuite, "TestPingPong2xMtuWithNaglingOff", PseudoTcpTestPingPong_TestPingPong2xMtuWithNaglingOff);
+    CU_add_test(pSuite, "TestPingPongShortSegments", PseudoTcpTestPingPong_TestPingPongShortSegments);
+    CU_add_test(pSuite, "TestPingPongShortSegmentsWithNaglingOff", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithNaglingOff);
+    CU_add_test(pSuite, "TestPingPongShortSegmentsWithAckDelayOff", PseudoTcpTestPingPong_TestPingPongShortSegmentsWithAckDelayOff);
     
     // Test Receive Window
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestReceiveWindow);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize);
-//    CU_add_test(pSuite, "PseudoTcpTest", PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize);
- 
-#endif
+    pSuite = CU_add_suite("PseudoTcpTestReceiveWindow", testInit, testClean);
+    CU_add_test(pSuite, "TestReceiveWindow", PseudoTcpTestReceiveWindow_TestReceiveWindow);
+    CU_add_test(pSuite, "TestSetVerySmallSendWindowSize", PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize);
+    CU_add_test(pSuite, "TestSetReceiveWindowSize", PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize);
 
 
     //CU_console_run_tests();

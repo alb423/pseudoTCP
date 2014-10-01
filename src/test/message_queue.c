@@ -37,7 +37,7 @@ extern "C" {
 #include "pseudo_tcp.h"
 #include "test/message_queue.h"
 /*** MACROS ******************************************************************/
-
+#define MESSAGE_QUEUE_DEBUG 0
 
 /*** GLOBAL VARIABLE DECLARATIONS (EXTERN) ***********************************/
 
@@ -77,6 +77,33 @@ U32 PQueue_Size(tMI_PQUEUE *pPQueue);
 size_t MQueue_Size();
 bool MQueue_Empty();
 
+// For Debug
+char *GetMSGString(int msgId)
+{
+#if 1
+    switch(msgId)
+    {
+        case 0: return "MSG_LPACKET";
+        case 1: return "MSG_RPACKET";
+        case 2: return "MSG_LCLOCK";
+        case 3: return "MSG_RCLOCK";
+        case 4: return "MSG_IOCOMPLETE";
+        case 5: return "MSG_WRITE";
+        default: return "undefined";
+    }
+#else
+    switch(msgId)
+    {
+        case 0: return "0";
+        case 1: return "1";
+        case 2: return "2";
+        case 3: return "3";
+        case 4: return "4";
+        case 5: return "5";
+        default: return "undefined";
+    }
+#endif
+}
 
 // ==== Message List ====
 void MList_Init(tMI_DLIST *pDList)
@@ -192,12 +219,6 @@ void MList_Pop_Back(tMI_DLIST *pDList)
 // Delete current element
 tMI_DLNODE *MList_Erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 {
-//#if _DEBUGMSG >= _DBG_VERBOSE
-//    char pTmpBuf[1024]= {0};
-//    sprintf(pTmpBuf, "pNode=0x%08x\n", (U32)pNode);
-//    LOG_F(LS_VERBOSE, pTmpBuf);
-//#endif // _DEBUGMSG
-
     if(pDList) {
         U32 vIndex;
         tMI_DLNODE *vpNode = NULL;
@@ -224,12 +245,7 @@ tMI_DLNODE *MList_Erase(tMI_DLIST *pDList, tMI_DLNODE *pNode)
 //  its first element is always the greatest of the elements it container
 // Returns a reference to the first element in the list container.
 
-#if 1
-void PQueue_Dump(tMI_PQUEUE *pQ)
-{
-    ;
-}
-#else
+#if MESSAGE_QUEUE_DEBUG==1
 void PQueue_Dump(tMI_PQUEUE *pQ)
 {
     tMI_PQNODE *vpTest = pQ->head;
@@ -249,6 +265,11 @@ void PQueue_Dump(tMI_PQUEUE *pQ)
     }
     printf("\n");
 }
+    
+#else
+    
+void PQueue_Dump(tMI_PQUEUE *pQ) {;}
+    
 #endif
 
 // sort by cmsDelay time
@@ -290,11 +311,17 @@ tDelayMessage * PQueue_Pop(tMI_PQUEUE *pQ)
     tMI_PQNODE *pPQNode;
     pPQNode = MI_PQPopHead(pQ);
     
+#if MESSAGE_QUEUE_DEBUG==1
     char pTmp[1024];
-    sprintf(pTmp, "PQueue_Pop(0x%08x)  head=0x%08x tail=0x%08x count=%d\n", (U32)pPQNode, (U32)pQ->head, (U32)pQ->tail,  (U32)pQ->count);
+    tDelayMessage *vpTxt;
+    vpTxt = MI_NODEENTRY(pPQNode, tDelayMessage, PQNode);
+    sprintf(pTmp, "PQueue_Pop(0x%08x)  head=0x%08x tail=0x%08x count=%d id,delay=(%s,%d)  \n", \
+            (U32)pPQNode, (U32)pQ->head, (U32)pQ->tail,  (U32)pQ->count, \
+            GetMSGString(vpTxt->pMsg->message_id), vpTxt->cmsDelay);
     LOG(LS_VERBOSE, pTmp);
-   
     PQueue_Dump(pQ);
+#endif
+    
     if(pPQNode) {
         tDelayMessage *vpTxt;
         vpTxt = MI_NODEENTRY(pPQNode, tDelayMessage, PQNode);
@@ -308,10 +335,17 @@ void PQueue_Push(tMI_PQUEUE *pQ, tMI_PQNODE *pPQNode)
 {
     MI_PQPushTail(pQ, pPQNode);
     
+#if MESSAGE_QUEUE_DEBUG==1
     char pTmp[1024];
-    sprintf(pTmp, "PQueue_Push(0x%08x)  head=0x%08x tail=0x%08x count=%d\n", (U32)pPQNode, (U32)pQ->head, (U32)pQ->tail,  (U32)pQ->count);
+    tDelayMessage *vpTxt;
+    vpTxt = MI_NODEENTRY(pPQNode, tDelayMessage, PQNode);
+    sprintf(pTmp, "PQueue_Push(0x%08x)  head=0x%08x tail=0x%08x count=%d, id,delay=(%s,%d) \n", \
+            (U32)pPQNode, (U32)pQ->head, (U32)pQ->tail,  (U32)pQ->count, \
+            GetMSGString(vpTxt->pMsg->message_id), vpTxt->cmsDelay);
     LOG(LS_VERBOSE, pTmp);
     PQueue_Dump(pQ);
+#endif
+
 }
 
 tDelayMessage *PQueue_Top(tMI_PQUEUE *pQ)
@@ -554,11 +588,15 @@ tMI_PQNODE * PQueue_Erase(tMI_PQUEUE *pQ, tMI_PQNODE *pNode)
 
                     pQ->count--;
                     
+#if MESSAGE_QUEUE_DEBUG==1
                     char pTmp[1024];
-                    sprintf(pTmp, "PQueue_Erase(0x%08x)  head=0x%08x tail=0x%08x count=%d \n", (U32)pNode,(U32)pQ->head, (U32)pQ->tail, pQ->count);
+                    tDelayMessage *vpTxt;
+                    vpTxt = MI_NODEENTRY(vpN, tDelayMessage, PQNode);
+                    sprintf(pTmp, "PQueue_Erase(0x%08x)  head=0x%08x tail=0x%08x count=%d id,delay=(%s,%d) \n", (U32)pNode,(U32)pQ->head, (U32)pQ->tail, pQ->count,\
+                            GetMSGString(vpTxt->pMsg->message_id), vpTxt->cmsDelay);
                     LOG(LS_VERBOSE, pTmp);
-
                     PQueue_Dump(pQ);
+#endif
 
                     if (vpN->h.next == 0)
                         return vpN->v.next;
@@ -1112,7 +1150,13 @@ bool MQueue_Get(tMessageQueue *pIn, tMessage *pmsg, int cmsWait, bool process_io
                 memset(pmsg, 0, sizeof(tMessage));
                 continue;
             }
+            
             // Now we return a pmsg with correct data
+#if MESSAGE_QUEUE_DEBUG==1
+            char pTmp[1024]={0};
+            sprintf(pTmp, "MessageQueue::Get %d", pmsg->message_id);
+            LOG(LS_INFO, pTmp);
+#endif
             return true;
         }
 
@@ -1410,6 +1454,58 @@ bool Event_Wait(tEvent *pEvent, int cmsWait, bool process_io)
 // rtc::Thread::Current()->PostDelayed()
 // rtc::Thread::Current()->size()
 
+// For Debug
+void Dump_MessageId(tMI_DLIST *pMsgq, tMI_PQUEUE *pDMsgq)
+{
+    int vCount=0;
+    {
+        tMI_DLIST *pQ = pMsgq;
+        tMI_DLNODE *vpTest = &pQ->node;
+        if(pQ->count!=0) {
+            printf("DLIST: ");
+            vCount = pQ->count;
+            vpTest = vpTest->next;
+            while(vCount) {
+                tMessage *vpMsg;
+                vpMsg = MI_NODEENTRY(vpTest, tMessage, DLNode);
+                printf(" %d ", vpMsg->message_id);
+                
+                vpTest = vpTest->next;
+                vCount--;
+            }
+            printf("\n");
+        }
+    }
+    
+    {
+        tMI_PQUEUE *pQ = pDMsgq;
+        tMI_PQNODE *vpTest = pQ->head;
+        tMI_PQNODE *vpVNode = pQ->head;
+        if(pQ->head) {
+            printf("PQueue: ");
+        }
+        else
+            return;
+        
+        while(vpTest) {
+            tDelayMessage *vpTxt;
+            tMessage *vpMsg;
+            vpTxt = MI_NODEENTRY(vpTest, tDelayMessage, PQNode);
+            vpMsg = vpTxt->pMsg;
+            printf(" %s ", GetMSGString(vpMsg->message_id));
+            //printf(" %d ", vpMsg->message_id);
+            
+            if(vpTest->h.next!=0) {
+                vpTest = vpTest->h.next;
+            } else {
+                vpTest = vpVNode->v.next;
+                vpVNode = vpVNode->v.next;
+            }
+        }
+        printf("\n");
+    }
+}
+
     
 bool Thread_ProcessMessages(tMessageQueue *pIn, int cmsLoop)
 {
@@ -1421,13 +1517,14 @@ bool Thread_ProcessMessages(tMessageQueue *pIn, int cmsLoop)
             tMessage msg;
             memset(&msg, 0, sizeof(tMessage));
             
-            //LOG_F(LS_INFO, "MQueue_Get");
+#if MESSAGE_QUEUE_DEBUG==1
+            Dump_MessageId(&pIn->msgq, &pIn->dmsgq);
+#endif
+
             if (!MQueue_Get(pIn, &msg, cmsNext, true)) {
-                //printf( "return !IsQuitting %d  ", !IsQuitting(pIn));
                 return !IsQuitting(pIn);
             }
             
-            //MQueue_Dispatch(&msg);
             if(pIn->pOnMessageCB)
                 pIn->pOnMessageCB(&msg);
             

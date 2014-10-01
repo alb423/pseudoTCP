@@ -255,7 +255,10 @@ tPseudoTcp * PTCP_Init(tIPseudoTcpNotify* notify, tFIFO_CB pNotifyReadCB, tFIFO_
     pPTCP->m_sbuf = FIFO_Create(pPTCP->m_sbuf_len, pNotifyReadCB, pNotifyWriteCB);
 
     pPTCP->m_rlist = malloc(sizeof(tMI_DLIST));
+    memset(pPTCP->m_rlist, 0, sizeof(tMI_DLIST));
     pPTCP->m_slist = malloc(sizeof(tMI_DLIST));
+    memset(pPTCP->m_slist, 0, sizeof(tMI_DLIST));
+    
     SEGMENT_LIST_Init(pPTCP->m_rlist);
     SEGMENT_LIST_Init(pPTCP->m_slist);
 

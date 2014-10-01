@@ -49,6 +49,7 @@ extern "C" {
 
 #define STREAM_MAX_SIZE 10000000 
 
+#define SHOW_FUNCTION printf("\n==== %s ====\n", __func__);
 // set STREAM_MAX_SIZE to 1,024,000 for below test cases
 // PseudoTcpTestReceiveWindow_TestReceiveWindow
 // PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize
@@ -180,33 +181,34 @@ void PseudoTcpTest_Destroy(tPseudoTcp *pPseudoTcp)
     //free(pPseudoTcp);
 }
         
-tPseudoTcp *PseudoTcpTest_Init(U32 conv, U8 vTcpId, tOnTcpReadableCB pReadableCB, tOnTcpWriteableCB pWirteableCB)
+tPseudoTcp *PseudoTcpTest_Init(U32 conv, U8 vTcpId, tOnTcpReadableCB pOnTcpReadableCB, tOnTcpWriteableCB pOnTcpWriteableCB)
 {
     tPseudoTcp *pPseudoTcp = NULL;
     
     tIPseudoTcpNotify vxNotify = {0};
     vxNotify.OnTcpOpen       = (tOnTcpOpenCB)OnTcpOpen;
-    vxNotify.OnTcpReadable   = (tOnTcpReadableCB)OnTcpReadable_01;
-    vxNotify.OnTcpWriteable  = (tOnTcpWriteableCB)OnTcpWriteable_01;
+    vxNotify.OnTcpReadable   = (tOnTcpReadableCB)pOnTcpReadableCB;
+    vxNotify.OnTcpWriteable  = (tOnTcpWriteableCB)pOnTcpWriteableCB;
     vxNotify.OnTcpClosed     = (tOnTcpClosedCB)OnTcpClosed;
     vxNotify.TcpWritePacket  = (tTcpWritePacketCB)TcpWritePacket;
-    
+
     //pPseudoTcp = PTCP_Init(&vxNotify, (tFIFO_CB)NotifyReadCB, (tFIFO_CB)NotifyWriteCB, conv);
-    pPseudoTcp = PTCP_Init(&vxNotify, (tFIFO_CB)pReadableCB, (tFIFO_CB)pWirteableCB, conv);
+    pPseudoTcp = PTCP_Init(&vxNotify, NULL, NULL, conv);
+    
     // For Debug
     pPseudoTcp->tcpId = vTcpId;
     return pPseudoTcp;
 }
     
-tPseudoTcpForTestBase * PseudoTcpTestBase_Init(U32 conv, tOnTcpReadableCB pReadableCB, tOnTcpWriteableCB pWirteableCB, tOnMessageCB pOnMessageCB)
+tPseudoTcpForTestBase * PseudoTcpTestBase_Init(U32 conv, tOnTcpReadableCB pOnTcpReadableCB, tOnTcpWriteableCB pOnTcpWriteableCB, tOnMessageCB pOnMessageCB)
 {
     tPseudoTcpForTestBase *pPTCPTestBase = malloc(sizeof(tPseudoTcpForTestBase));
     memset(pPTCPTestBase, 0, sizeof(tPseudoTcpForTestBase));
 
-    pPTCPTestBase->local_ = PseudoTcpTest_Init(conv, 0, pReadableCB, pWirteableCB);
+    pPTCPTestBase->local_ = PseudoTcpTest_Init(conv, 0, pOnTcpReadableCB, pOnTcpWriteableCB);
     _gpLocal = pPTCPTestBase->local_;
 
-    pPTCPTestBase->remote_ = PseudoTcpTest_Init(conv, 1, pReadableCB, pWirteableCB);
+    pPTCPTestBase->remote_ = PseudoTcpTest_Init(conv, 1, pOnTcpReadableCB, pOnTcpWriteableCB);
     _gpRemote = pPTCPTestBase->remote_;
     
     pPTCPTestBase->send_stream_ = MS_Init(NULL, STREAM_MAX_SIZE);
@@ -274,6 +276,7 @@ void PseudoTcpTestBase_Destroy(tPseudoTcpForTestBase *pPTCPTestBase)
             {
                 int k=0;
                 tMI_PQNODE *pPQNode = pPTCPTestBase->msq->dmsgq.head;
+                //tMI_PQNODE *pPQNode_VHead = pPQNode;
                 for(k=0; k<pPTCPTestBase->msq->dmsgq.count; k++)
                 {
                     if(pPQNode) {
@@ -281,10 +284,15 @@ void PseudoTcpTestBase_Destroy(tPseudoTcpForTestBase *pPTCPTestBase)
                         vpTxt = MI_NODEENTRY(pPQNode, tDelayMessage, PQNode);
                         printf("\t0x%08x 0x%08x, num=%d, msg=0x%08x msgid=%d\n",(U32)pPQNode, (U32)&vpTxt->PQNode, vpTxt->num, (U32)vpTxt->pMsg, vpTxt->pMsg->message_id);
 
-                        if(pPQNode->h.next)
+                        if(pPQNode->h.next) {
                             pPQNode = pPQNode->h.next;
-                        else
+                        }
+                        else {
                             pPQNode = pPQNode->v.next;
+                            
+                            //pPQNode = pPQNode_VHead->v.next;
+                            //pPQNode_VHead = pPQNode_VHead->v.next;
+                        }
                     }
                 }
             }
@@ -402,7 +410,6 @@ void UpdateRemoteClock()
 
 void OnMessage_01(tMessage* message)
 {
-    //LOG_F(LS_INFO, "OnMessage_01\n");
     //printf("OnMessage_01 message->message_id=%d\n", message->message_id);
     switch (message->message_id) {
     case MSG_LPACKET: {
@@ -415,7 +422,6 @@ void OnMessage_01(tMessage* message)
             free(pData);
         }
         else {
-            //PTCP_NotifyPacket(_gpLocal, pData, message->pData->len);
             UpdateLocalClock();
         }
         break;
@@ -430,8 +436,7 @@ void OnMessage_01(tMessage* message)
             free(pData);
         }
         else {
-            //PTCP_NotifyPacket(_gpLocal, pData, message->pData->len);
-            UpdateLocalClock();
+            UpdateRemoteClock();
         }
         break;
     }
@@ -521,7 +526,7 @@ uint32_t CreateRandomId() {
 
     
 typedef struct tVector {
-    U8 *pVal;
+    U32 *pVal;
     U32 size;
     U32 index;
 } tVector;
@@ -1025,7 +1030,7 @@ void OnTcpOpen(tPseudoTcp* pPTCP)
     }
     if (pPTCP == _gpLocal) {
         _gpPTCPTestBase->have_connected_ = true;
-        OnTcpWriteable_01(pPTCP);
+        _gpPTCPTestBase->local_->OnTcpWriteable(pPTCP);
     }
 }
 
@@ -1127,11 +1132,11 @@ void TestTransfer_01(int size)
 
 
     EXPECT_TRUE_WAIT(_gpPTCPTestBase->have_connected_, kConnectTimeoutMs);
-    printf("line:%d _gpPTCPTestBase->have_connected_=%d\n", __LINE__, _gpPTCPTestBase->have_connected_);
+    //printf("line:%d _gpPTCPTestBase->have_connected_=%d\n", __LINE__, _gpPTCPTestBase->have_connected_);
     // Sending will start from OnTcpWriteable and complete when all data has
     // been received.
     EXPECT_TRUE_WAIT(_gpPTCPTestBase->have_disconnected_, kTransferTimeoutMs);
-    printf("line:%d _gpPTCPTestBase->have_disconnected_=%d\n", __LINE__, _gpPTCPTestBase->have_disconnected_);
+    //printf("line:%d _gpPTCPTestBase->have_disconnected_=%d\n", __LINE__, _gpPTCPTestBase->have_disconnected_);
 
     elapsed = TimeSince(start);
 
@@ -1200,13 +1205,11 @@ void PseudoTcpTest_TestSend(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
 
     // When size > 1443 (1500-PACKET_OVERHEAD), the data need demutiplex
-    //TestTransfer_01(1024);
-    //TestTransfer_01(1500);
-    //TestTransfer_01(30000);
     TestTransfer_01(1000000);
 
     PseudoTcpTestBase_Destroy(pTest);
@@ -1219,6 +1222,7 @@ void PseudoTcpTest_TestSendWithDelay(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetDelay(50);
@@ -1233,6 +1237,7 @@ void PseudoTcpTest_TestSendWithLoss(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetLoss(10);
@@ -1247,6 +1252,7 @@ void PseudoTcpTest_TestSendWithDelayAndLoss(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetDelay(50);
@@ -1263,6 +1269,7 @@ void PseudoTcpTest_TestSendWithLossAndOptNaglingOff(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetLoss(10);
@@ -1277,6 +1284,8 @@ void PseudoTcpTest_TestSendWithLossAndOptAckDelayOff(void)
 {
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetLoss(10);
@@ -1290,6 +1299,8 @@ void PseudoTcpTest_TestSendWithDelayAndOptNaglingOff(void)
 {
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetDelay(50);
@@ -1302,6 +1313,8 @@ void PseudoTcpTest_TestSendWithDelayAndOptAckDelayOff(void)
 {
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
+    
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetDelay(50);
@@ -1315,6 +1328,7 @@ void PseudoTcpTest_TestSendRemoteNoWindowScale(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetLocalOptRcvBuf(100000);
@@ -1330,6 +1344,7 @@ void PseudoTcpTest_TestSendLocalNoWindowScale(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetRemoteOptRcvBuf(100000);
@@ -1344,6 +1359,7 @@ void PseudoTcpTest_TestSendBothUseWindowScale(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetRemoteOptRcvBuf(100000);
@@ -1358,6 +1374,7 @@ void PseudoTcpTest_TestSendLargeInFlight(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetRemoteOptRcvBuf(100000);
@@ -1372,6 +1389,7 @@ void PseudoTcpTest_TestSendBothUseLargeWindowScale(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetRemoteOptRcvBuf(1000000);
@@ -1386,6 +1404,7 @@ void PseudoTcpTest_TestSendSmallReceiveBuffer(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetRemoteOptRcvBuf(10000);
@@ -1400,6 +1419,7 @@ void PseudoTcpTest_TestSendVerySmallReceiveBuffer(void)
     tPseudoTcpForTestBase *pTest = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_01, (void *)OnTcpWriteable_01, (tOnMessageCB)OnMessage_01);
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetRemoteOptRcvBuf(100);
@@ -1446,10 +1466,10 @@ void WriteData_02() {
         MS_GetPosition(_gpPTCPTestBase->send_stream_, &position);
 
         tosend = _gpPseudoTcpTestPingPong->bytes_per_send_ ? _gpPseudoTcpTestPingPong->bytes_per_send_ : sizeof(block);
-        if (MS_Read(_gpPTCPTestBase->send_stream_, block, sizeof(block), &tosend, NULL) !=
+        if (MS_Read(_gpPTCPTestBase->send_stream_, block, tosend, &tosend, NULL) !=
             SR_EOS) {
 
-            sent = PTCP_Send(_gpLocal, (const U8 *)block, tosend);
+            sent = PTCP_Send(_gpPseudoTcpTestPingPong->sender_, (const U8 *)block, tosend);
             UpdateLocalClock();
             if (sent != -1) {
                 MS_SetPosition(_gpPTCPTestBase->send_stream_, position + sent);
@@ -1492,7 +1512,7 @@ void OnTcpReadable_02(tPseudoTcp* pPTCP)
     MS_GetSize(_gpPTCPTestBase->send_stream_, &desired);
     
     if (position == desired) {
-        if (_gpPseudoTcpTestPingPong->receiver_ == (_gpPTCPTestBase->local_) && --(_gpPseudoTcpTestPingPong->iterations_remaining_) == 0) {
+        if ((_gpPseudoTcpTestPingPong->receiver_ == (_gpPTCPTestBase->local_)) && ((--_gpPseudoTcpTestPingPong->iterations_remaining_) == 0)) {
             Close();
             // TODO: Fake OnTcpClosed() on the receiver for now.
             OnTcpClosed(_gpPTCPTestBase->remote_, 0);
@@ -1504,7 +1524,8 @@ void OnTcpReadable_02(tPseudoTcp* pPTCP)
         
         MS_Rewind(_gpPTCPTestBase->recv_stream_);
         MS_Rewind(_gpPTCPTestBase->send_stream_);
-        OnTcpWriteable_02(_gpPseudoTcpTestPingPong->sender_);
+        pPTCP->OnTcpWriteable(_gpPseudoTcpTestPingPong->sender_);
+        //OnTcpWriteable_02(_gpPseudoTcpTestPingPong->sender_);
     }
 }
     
@@ -1601,6 +1622,7 @@ void PseudoTcpTestPingPong_TestPingPong1xMtu(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     TestPingPong(100, 100);
@@ -1613,6 +1635,7 @@ void PseudoTcpTestPingPong_TestPingPong3xMtu(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     TestPingPong(400, 100);
@@ -1626,6 +1649,7 @@ void PseudoTcpTestPingPong_TestPingPong2xMtu(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     TestPingPong(2000, 5);
@@ -1639,6 +1663,7 @@ void PseudoTcpTestPingPong_TestPingPong2xMtuWithAckDelayOff(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetOptAckDelay(0);
@@ -1653,6 +1678,7 @@ void PseudoTcpTestPingPong_TestPingPong2xMtuWithNaglingOff(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetOptNagling(false);
@@ -1667,6 +1693,7 @@ void PseudoTcpTestPingPong_TestPingPongShortSegments(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetOptAckDelay(5000);
@@ -1682,6 +1709,7 @@ void PseudoTcpTestPingPong_TestPingPongShortSegmentsWithNaglingOff(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetOptNagling(false);
@@ -1697,6 +1725,7 @@ void PseudoTcpTestPingPong_TestPingPongShortSegmentsWithAckDelayOff(void)
     tPseudoTcpTestPingPong *pTest = PseudoTcpTestPingPong_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetBytesPerSend(50); // i.e. two Send calls per payload
@@ -1722,12 +1751,12 @@ typedef struct tPseudoTcpTestReceiveWindow
     
 tPseudoTcpTestReceiveWindow *_gpPseudoTcpTestReceiveWindow;
     
-int EstimateSendWindowSize(void)
+int EstimateReceiveWindowSize(void)
 {
     return (U32)_gpPseudoTcpTestReceiveWindow->recv_position_->pVal[0];
 }
 
-int EstimateReceiveWindowSize(void)
+int EstimateSendWindowSize(void)
 {
     return (U32)(_gpPseudoTcpTestReceiveWindow->send_position_->pVal[0] - _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[0]);
 }
@@ -1803,10 +1832,10 @@ void WriteData_03(U32 messageId) {
     //int message_queue_size = static_cast<int>(rtc::Thread::Current()->size());
     
     size_t message_queue_size = MQueue_Size(_gpPTCPTestBase->msq);
-    printf("MQueue_Size(_gpPTCPTestBase->msq)=%zu\n",MQueue_Size(_gpPTCPTestBase->msq));
-    printf("size (send_position, recv_position) = (%d, %d)\n",\
-           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
-           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_));
+//    printf("MQueue_Size(_gpPTCPTestBase->msq)=%zu\n",MQueue_Size(_gpPTCPTestBase->msq));
+//    printf("size (send_position, recv_position) = (%d, %d)\n",\
+//           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
+//           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_));
     // The message queue will always have at least 2 messages, an RCLOCK and
     // an LCLOCK, since they are added back on the delay queue at the same time
     // they are pulled off and therefore are never really removed.
@@ -1815,6 +1844,7 @@ void WriteData_03(U32 messageId) {
         // after giving those messages time to process, which should free up the
         // send buffer.
         //rtc::Thread::Current()->PostDelayed(10, this, MSG_WRITE);
+        
         MQueue_PostDelayed(_gpPTCPTestBase->msq, (int)10, MSG_WRITE, NULL);
         //MQueue_PostDelayed(_gpPTCPTestBase->msq, (int)10, messageId, NULL);
     } else {
@@ -1878,22 +1908,22 @@ void TestTransfer_03(int size) {
     //EXPECT_GE(1024u, estimated_recv_window - send_position_diff);
     CU_ASSERT_EQUAL(1, 1024u >= (estimated_recv_window - send_position_diff));
     
-    printf(" send position %d %d\n receive position %d %d\n",\
-    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[0],\
-    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[1],\
-    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[0],\
-    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[1]);
-    
-    printf("size (send_position,recv_position) = (%d, %d) send_position_diff=%zu, estimated_recv_window=%zu\n",\
-           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
-           Vector_Size(_gpPseudoTcpTestReceiveWindow->recv_position_),\
-           send_position_diff, estimated_recv_window);
+//    printf(" send position %d %d\n receive position %d %d\n",\
+//    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[0],\
+//    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[1],\
+//    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[0],\
+//    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[1]);
+//    
+//    printf("size (send_position,recv_position) = (%d, %d) send_position_diff=%zu, estimated_recv_window=%zu\n",\
+//           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
+//           Vector_Size(_gpPseudoTcpTestReceiveWindow->recv_position_),\
+//           send_position_diff, estimated_recv_window);
     
     // Receiver drained the receive window twice.
     //EXPECT_EQ(2 * estimated_recv_window, _gpPseudoTcpTestReceiveWindow->recv_position_[1]);
     CU_ASSERT_EQUAL(1, 2 * estimated_recv_window >= _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[1]);
 }
-                
+
 void OnMessage_03(tMessage* message) {
 
     OnMessage_01(message);
@@ -1917,8 +1947,8 @@ tPseudoTcpTestReceiveWindow *PseudoTcpTestReceiveWindow_Init(void)
     
     pPtr->send_stream_ = 0;
     pPtr->recv_stream_ = 0;
-    pPtr->send_position_ = Vector_Init(10240);
-    pPtr->recv_position_ = Vector_Init(10240);
+    pPtr->send_position_ = Vector_Init(1024);
+    pPtr->recv_position_ = Vector_Init(1024);
     
     _gpPseudoTcpTestReceiveWindow = pPtr;
     _gpPTCPTestBase  = PseudoTcpTestBase_Init(0, (void *)OnTcpReadable_03, (void *)OnTcpWriteable_03, (tOnMessageCB)OnMessage_03);
@@ -1943,12 +1973,13 @@ void PseudoTcpTestReceiveWindow_TestReceiveWindow(void)
     tPseudoTcpTestReceiveWindow *pTest = PseudoTcpTestReceiveWindow_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetOptNagling(false);
     SetOptAckDelay(0);
-    TestTransfer_03(1024 * 10);
-    //TestTransfer_03(1024 * 1000);
+    //TestTransfer_03(1024 * 10);
+    TestTransfer_03(1024 * 1000);
     PseudoTcpTestReceiveWindow_Destroy(pTest);
 }
 
@@ -1958,6 +1989,7 @@ void PseudoTcpTestReceiveWindow_TestSetVerySmallSendWindowSize(void)
     tPseudoTcpTestReceiveWindow *pTest = PseudoTcpTestReceiveWindow_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetOptNagling(false);
@@ -1975,6 +2007,7 @@ void PseudoTcpTestReceiveWindow_TestSetReceiveWindowSize(void)
     tPseudoTcpTestReceiveWindow *pTest = PseudoTcpTestReceiveWindow_Init();
     CU_ASSERT_PTR_NOT_NULL(pTest);
 
+    SHOW_FUNCTION;
     SetLocalMtu(1500);
     SetRemoteMtu(1500);
     SetOptNagling(false);
