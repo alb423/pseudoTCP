@@ -30,7 +30,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef linux
+#if __LINUX__ || __linux || __unix || __unix
 #include <error.h>
 #endif
 #include <errno.h>
@@ -66,8 +66,7 @@ const U32 HALF = 0x80000000;
 U64 TimeNanos()
 {
     S64 ticks = 0;
-#if 1
-//#if defined(OSX) || defined(IOS)
+    
 #if __APPLE__
     static mach_timebase_info_data_t timebase;
     if (timebase.denom == 0) {
@@ -81,21 +80,34 @@ U64 TimeNanos()
     }
     // Use timebase to convert absolute time tick units into nanoseconds.
     ticks = mach_absolute_time() * timebase.numer / timebase.denom;
-//#elif defined(POSIX) || defined(LINUX)
-#elif __LINUX__
+/*
+    #include "TargetConditionals.h"
+    #if TARGET_IPHONE_SIMULATOR
+         // iOS Simulator
+    #elif TARGET_OS_IPHONE
+        // iOS device
+    #elif TARGET_OS_MAC
+        // Other kinds of Mac OS
+    #else
+        // Unsupported platform
+    #endif
+*/ 
+#elif __LINUX__ || __linux || __unix || __unix
+
     struct timespec ts;
     // TODO: Do we need to handle the case when CLOCK_MONOTONIC
     // is not supported?
     clock_gettime(CLOCK_MONOTONIC, &ts);
     ticks = kNumNanosecsPerSec * (S64)(ts.tv_sec) + (S64)(ts.tv_nsec);
-#endif
 
 #else
+// __ANDROID__
     struct timespec ts;
     // TODO: Do we need to handle the case when CLOCK_MONOTONIC
     // is not supported?
     clock_gettime(CLOCK_MONOTONIC, &ts);
     ticks = kNumNanosecsPerSec * (S64)(ts.tv_sec) + (S64)(ts.tv_nsec);
+    
 #endif
 
     return ticks;

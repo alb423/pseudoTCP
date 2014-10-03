@@ -35,12 +35,14 @@ extern "C" {
 #include <CUnit/Console.h>
 #include "mi_types.h"
 #include "mi_util.h"
-#include "test/memory_stream.h"
+#include "memory_stream.h"
 /*** MACROS ******************************************************************/
-#if __LINUX__
+#if __LINUX__ || __linux || __unix || __unix
 #define ALIGNP(p, t) ((U8 *)((((U32)(p) + ((t) - 1)) & ~((t) - 1))))
 #elif __APPLE__
 #define ALIGNP(p, t) ((U8 *)((((U64)(p) + ((t) - 1)) & ~((t) - 1))))
+#else
+#define ALIGNP(p, t) ((U8 *)((((U32)(p) + ((t) - 1)) & ~((t) - 1))))
 #endif
 
 /*** GLOBAL VARIABLE DECLARATIONS (EXTERN) ***********************************/

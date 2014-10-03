@@ -27,7 +27,7 @@ extern "C" {
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef linux
+#if __LINUX__ || __linux || __unix || __unix
 #include <error.h>
 #endif
 #include <errno.h>

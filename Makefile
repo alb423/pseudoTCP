@@ -4,7 +4,7 @@ STRIP	= $(CROSS_COMPILE)strip
 AR	= $(CROSS_COMPILE)ar
 
 LIBPATH = 
-INCLUDEPATH = include
+INCLUDEPATH = -I. -Iinclude -Iinclude/test
 
 UNAME_S := $(shell uname -s)
 
@@ -20,13 +20,13 @@ ifeq ($(UNAME_S),Darwin)
    LIBS    = -L/opt/local/lib -lpthread -rdynamic
 endif
 
-CFLAGS  = -g -Wall -Wno-format-security -DNCURSES_OPAQUE=0 -I. -I$(INCLUDEPATH)
+CFLAGS  = -g -Wall -Wno-format-security -DNCURSES_OPAQUE=0 $(INCLUDEPATH)
 SRC_C   +=  $(wildcard src/*.c)
 OBJS    +=  $(SRC_C:%.c=%.o)
 
 TEST_SRC_C   +=  $(wildcard src/test/*.c) $(wildcard src/CUnit/*.c) 
 TEST_OBJS    +=  $(TEST_SRC_C:%.c=%.o)
-TEST_LIBS    +=  $(LIBS) -lcurses libpseudoTCP.a
+TEST_LIBS    +=  $(LIBS) libpseudoTCP.a
 
 all: pseudoTCP test
 	

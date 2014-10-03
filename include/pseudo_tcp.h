@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 /*** STANDARD INCLUDES *******************************************************/
-#ifdef linux
+#if __LINUX__ || __linux || __unix || __unix
 // MacOS don't have error.h
 #include <error.h>
 #endif

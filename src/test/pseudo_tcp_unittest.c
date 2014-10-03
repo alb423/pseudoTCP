@@ -37,8 +37,8 @@ extern "C" {
 #include <CUnit/Console.h>
 #include "mi_types.h"
 #include "pseudo_tcp.h"
-#include "test/memory_stream.h"
-#include "test/message_queue.h"
+#include "memory_stream.h"
+#include "message_queue.h"
     
 /*** MACROS ******************************************************************/
 #define LOCAL  0
@@ -70,8 +70,8 @@ inline S64 MillisecondTimestamp()
 
 void SleepMs(int msecs)
 {
-    struct timespec short_wait;
-    struct timespec remainder;
+    struct timespec short_wait, remainder;
+    //struct timespec remainder;
     short_wait.tv_sec = msecs / 1000;
     short_wait.tv_nsec = (msecs % 1000) * 1000 * 1000;
     LOG_F(LS_INFO, "SleepMs");
@@ -96,10 +96,10 @@ void SleepMs(int msecs)
 // Reference Guint.h
 #define WAIT_(ex, timeout, res) \
 do { \
-    U32 start = Time(); \
+    U32 _start = Time(); \
     res = (ex); \
     /* printf("res=%d, start=%d, timeout=%d Total=%d\n", res, start, timeout, (start + timeout)); */\
-    while (!res && (Time() < start + timeout)) { \
+    while (!res && (Time() < _start + timeout)) { \
         /* printf("current=%d, timeout=%d \n", Time(), (start + timeout)); */ \
         Thread_ProcessMessages(_gpPTCPTestBase->msq, 1); \
         res = (ex); \
@@ -174,7 +174,7 @@ tPseudoTcp        *_gpLocal;
 tPseudoTcp        *_gpRemote;
 tPseudoTcpForTestBase *_gpPTCPTestBase;
 
-    
+
 void PseudoTcpTest_Destroy(tPseudoTcp *pPseudoTcp)
 {
     PTCP_Destroy(pPseudoTcp);
@@ -384,8 +384,9 @@ void DisableLocalWindowScale()
 void UpdateClock(tPseudoTcp* pPTCP, U32 message)
 {
     long interval = 0;  // NOLINT
-    bool bFlag = false;
-    bFlag = PTCP_GetNextClock(pPTCP, PTCP_Now(), &interval);
+    //bool bFlag = false;
+    //bFlag = PTCP_GetNextClock(pPTCP, PTCP_Now(), &interval);
+    PTCP_GetNextClock(pPTCP, PTCP_Now(), &interval);
 
     interval = (S32)MAX(interval, 0L);  // sometimes interval is < 0
     //talk_base::Thread::Current()->Clear(this, message);
@@ -510,14 +511,15 @@ int GetRandom() {
 }
 
 bool Generate(void* buf, size_t len) {
-    for (size_t i = 0; i < len; ++i) {
-        ((uint8_t *)buf)[i] = (uint8_t)(GetRandom());
+    size_t i;
+    for (i = 0; i < len; ++i) {
+        ((U8 *)buf)[i] = (U8)(GetRandom());
     }
     return true;
 }
 
-uint32_t CreateRandomId() {
-    uint32_t id;
+U32 CreateRandomId() {
+    U32 id;
     if (!Generate(&id, sizeof(id))) {
         LOG_F(LS_VERBOSE, "Failed to generate random id!");
     }
@@ -1157,7 +1159,6 @@ void TestTransfer_01(int size)
     vRet = memcmp(pIn, pOut, size);
     CU_ASSERT_EQUAL(0, vRet);
     if(vRet) {
-        int i;
         printf("head data\n");
         for(i=0; i<10; i++) {
             printf("%02x ", (U8)pIn[i]);
@@ -1832,21 +1833,22 @@ void WriteData_03(U32 messageId) {
     //int message_queue_size = static_cast<int>(rtc::Thread::Current()->size());
     
     size_t message_queue_size = MQueue_Size(_gpPTCPTestBase->msq);
-//    printf("MQueue_Size(_gpPTCPTestBase->msq)=%zu\n",MQueue_Size(_gpPTCPTestBase->msq));
-//    printf("size (send_position, recv_position) = (%d, %d)\n",\
-//           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
-//           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_));
-    // The message queue will always have at least 2 messages, an RCLOCK and
-    // an LCLOCK, since they are added back on the delay queue at the same time
-    // they are pulled off and therefore are never really removed.
+/*    
+    printf("MQueue_Size(_gpPTCPTestBase->msq)=%zu\n",MQueue_Size(_gpPTCPTestBase->msq));
+    printf("size (send_position, recv_position) = (%d, %d)\n",\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_));
+*/
+    /* The message queue will always have at least 2 messages, an RCLOCK and
+       an LCLOCK, since they are added back on the delay queue at the same time
+       they are pulled off and therefore are never really removed. */
     if (message_queue_size > 2) {
-        // If there are non-clock messages remaining, attempt to continue sending
-        // after giving those messages time to process, which should free up the
-        // send buffer.
+        /* If there are non-clock messages remaining, attempt to continue sending
+           after giving those messages time to process, which should free up the
+           send buffer. */
         //rtc::Thread::Current()->PostDelayed(10, this, MSG_WRITE);
         
         MQueue_PostDelayed(_gpPTCPTestBase->msq, (int)10, MSG_WRITE, NULL);
-        //MQueue_PostDelayed(_gpPTCPTestBase->msq, (int)10, messageId, NULL);
     } else {
         
         if (!PTCP_IsReceiveBufferFull(_gpRemote)) {
@@ -1867,7 +1869,7 @@ void WriteData_03(U32 messageId) {
 
     
 void TestTransfer_03(int size) {
-    U32 start;
+    //U32 start;
     int i;
     bool bFlag = false;
     
@@ -1887,7 +1889,7 @@ void TestTransfer_03(int size) {
     CU_ASSERT_EQUAL(true, bFlag);
     
     // Connect and wait until connected.
-    start = Time();
+    //start = Time();
     CU_ASSERT_EQUAL(0, Connect_01());
     EXPECT_TRUE_WAIT(_gpPTCPTestBase->have_connected_, kConnectTimeoutMs);
     
@@ -1907,18 +1909,18 @@ void TestTransfer_03(int size) {
     const size_t send_position_diff = _gpPseudoTcpTestReceiveWindow->send_position_->pVal[1] - _gpPseudoTcpTestReceiveWindow->send_position_->pVal[0];
     //EXPECT_GE(1024u, estimated_recv_window - send_position_diff);
     CU_ASSERT_EQUAL(1, 1024u >= (estimated_recv_window - send_position_diff));
+/*    
+    printf(" send position %d %d\n receive position %d %d\n",\
+    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[0],\
+    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[1],\
+    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[0],\
+    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[1]);
     
-//    printf(" send position %d %d\n receive position %d %d\n",\
-//    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[0],\
-//    _gpPseudoTcpTestReceiveWindow->send_position_->pVal[1],\
-//    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[0],\
-//    _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[1]);
-//    
-//    printf("size (send_position,recv_position) = (%d, %d) send_position_diff=%zu, estimated_recv_window=%zu\n",\
-//           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
-//           Vector_Size(_gpPseudoTcpTestReceiveWindow->recv_position_),\
-//           send_position_diff, estimated_recv_window);
-    
+    printf("size (send_position,recv_position) = (%d, %d) send_position_diff=%zu, estimated_recv_window=%zu\n",\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->send_position_),\
+           Vector_Size(_gpPseudoTcpTestReceiveWindow->recv_position_),\
+           send_position_diff, estimated_recv_window);
+*/  
     // Receiver drained the receive window twice.
     //EXPECT_EQ(2 * estimated_recv_window, _gpPseudoTcpTestReceiveWindow->recv_position_[1]);
     CU_ASSERT_EQUAL(1, 2 * estimated_recv_window >= _gpPseudoTcpTestReceiveWindow->recv_position_->pVal[1]);

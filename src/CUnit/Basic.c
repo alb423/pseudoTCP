@@ -46,7 +46,7 @@
 #include <CUnit/TestDB.h>
 #include <CUnit/Util.h>
 #include <CUnit/TestRun.h>
-#include <Cunit/Basic.h>
+#include <CUnit/Basic.h>
 #include <CUnit/CUnit_intl.h>
 
 /*=================================================================

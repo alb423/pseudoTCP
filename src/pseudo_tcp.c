@@ -405,7 +405,6 @@ void PTCP_NotifyClock(tPseudoTcp *pPTCP, U32 now)
             // Note: (pPTCP->m_slist.front().xmit == 0)) {
             // retransmit segments
 #if _DEBUGMSG >= _DBG_NORMAL
-            char pTmp[1024]= {0};
             sprintf(pTmp, "%s: timeout retransmit (rto: %d) (rto_base: %d) (now: %d) (dup_acks: %d)",\
                     PTCP_WHOAMI(pPTCP->tcpId), pPTCP->m_rx_rto, pPTCP->m_rto_base, now, (unsigned)pPTCP->m_dup_acks);
             LOG_F(LS_VERBOSE, pTmp);
@@ -698,7 +697,8 @@ tWriteResult PTCP_Packet(tPseudoTcp *pPTCP, U32 seq, U8 flags, U32 offset, U32 l
 //      return WR_FAIL;
 //   memset(buffer, 0, MAX_PACKET);
 
-    U8 buffer[MAX_PACKET] = {0};
+    U8 buffer[MAX_PACKET];
+    memset(buffer, 0, MAX_PACKET);
     long_to_bytes(pPTCP->m_conv, &buffer[0]);
     long_to_bytes(seq, &buffer[4]);
     long_to_bytes(pPTCP->m_rcv_nxt, &buffer[8]);
@@ -826,7 +826,8 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
 {
     //LOG_F(LS_INFO, "PTCP_Process");
     ASSERT(pPTCP!=NULL);
-    char pTmp[1024]= {0};
+    char pTmp[1024];
+    memset(pTmp, 0, 1024);
     // If this is the wrong conversation, send a reset!?! (with the correct conversation?)
     if (pSeg->conv != pPTCP->m_conv) {
         //if ((seg.flags & FLAG_RST) == 0) {
@@ -867,7 +868,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
             if (pPTCP->m_state == TCP_LISTEN) {
                 pPTCP->m_state = TCP_SYN_RECEIVED;
                 //LOG_F(LS_INFO, "State: TCP_LISTEN -> TCP_SYN_RECEIVED");
-                char pTmp[1024]= {0};
+                memset(pTmp, 0, 1024);
                 sprintf(pTmp, "%s: State: TCP_LISTEN -> TCP_SYN_RECEIVED", PTCP_WHOAMI(pPTCP->tcpId));
                 LOG_F(LS_VERBOSE, pTmp);
                 //pPTCP->associate(addr);
@@ -875,7 +876,7 @@ bool PTCP_Process(tPseudoTcp *pPTCP, tSegment *pSeg)
             } else if (pPTCP->m_state == TCP_SYN_SENT) {
                 pPTCP->m_state = TCP_ESTABLISHED;
                 //LOG_F(LS_INFO, "State: TCP_SYN_SENT -> TCP_ESTABLISHED");
-                char pTmp[1024]= {0};
+                memset(pTmp, 0, 1024);
                 sprintf(pTmp, "%s: State: TCP_SYN_SENT -> TCP_ESTABLISHED", PTCP_WHOAMI(pPTCP->tcpId));
                 LOG_F(LS_VERBOSE, pTmp);
                 adjustMTU(pPTCP);
@@ -1509,8 +1510,9 @@ void parseOptions(tPseudoTcp *pPTCP, const U8* data, U32 len)
         U8 val;
     } tSet;
 
-    tMI_DLIST options_specified={0};
-
+    tMI_DLIST options_specified;
+    memset(&options_specified, 0, sizeof(tMI_DLIST));
+    
     // See http://www.freesoft.org/CIE/Course/Section4/8.htm for
     // parsing the options list.
     //talk_base::ByteBuffer buf(data, len);

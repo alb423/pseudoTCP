@@ -35,7 +35,7 @@ extern "C" {
 #include "mi_types.h"
 #include "mi_util.h"
 #include "pseudo_tcp.h"
-#include "test/message_queue.h"
+#include "message_queue.h"
 /*** MACROS ******************************************************************/
 #define MESSAGE_QUEUE_DEBUG 0
 
@@ -78,7 +78,7 @@ size_t MQueue_Size();
 bool MQueue_Empty();
 
 // For Debug
-char *GetMSGString(int msgId)
+const char *GetMSGString(int msgId)
 {
 #if 1
     switch(msgId)
@@ -863,7 +863,7 @@ void MQueue_Clear(tMessageQueue *pMQueue, U32 id, tMI_DLIST* removed)
 
 void MQueue_Dispatch(tMessage *pmsg) {
     if(pmsg->phandler) {
-        // 此處的 OnMessage 並非 unittest 內的 OnMessage
+        // 此�???OnMessage 並�? unittest ?��? OnMessage
         pmsg->phandler->OnMessage(pmsg);
     }
 }
@@ -1293,20 +1293,20 @@ void Event_WakeUp(tEvent *pEvent)
     }
 }
 
-void Event_OnPreEvent(tEvent *pEvent, uint32_t ff) {
+void Event_OnPreEvent(tEvent *pEvent, U32 ff) {
     // It is not possible to perfectly emulate an auto-resetting event with
     // pipes.  This simulates it by resetting before the event is handled.
 
     CriticalSection_Enter(&pEvent->crit_);
     if (pEvent->fSignaled_) {
-        uint8_t b[4];  // Allow for reading more than 1 byte, but expect 1.
+        U8 b[4];  // Allow for reading more than 1 byte, but expect 1.
         VERIFY(1 == read(pEvent->afd_[0], b, sizeof(b)));
         pEvent->fSignaled_ = false;
     }
     CriticalSection_Leave(&pEvent->crit_);
 }
 
-void Event_OnEvent(tEvent *pEvent, uint32_t ff, int err) {
+void Event_OnEvent(tEvent *pEvent, U32 ff, int err) {
     ASSERT(false);
 }
     
@@ -1393,7 +1393,7 @@ bool Event_Wait(tEvent *pEvent, int cmsWait, bool process_io)
             CriticalSection_Enter(&pEvent->crit_);
             {
                 int fd = pEvent->afd_[0];
-                uint32_t ff = 0;
+                U32 ff = 0;
                 int errcode = 0;
                 
                 if (FD_ISSET(fd, &fdsRead) || FD_ISSET(fd, &fdsWrite)) {
@@ -1540,7 +1540,7 @@ bool Thread_ProcessMessages(tMessageQueue *pIn, int cmsLoop)
 
 
 #if 0
-void Thread_Clear(MessageHandler *phandler, uint32 id,
+void Thread_Clear(MessageHandler *phandler, U32 id,
                   MessageList* removed) {
     CritScope cs(&crit_);
     
