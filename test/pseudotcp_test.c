@@ -38,10 +38,10 @@ extern "C" {
 #include "fifo_buffer.h"
 
 
-#include "test/fifo_buffer_unittest.h"
-#include "test/segment_list_unittest.h"
-#include "test/memory_stream_unittest.h"
-#include "test/pseudo_tcp_unittest.h"
+#include "fifo_buffer_unittest.h"
+#include "segment_list_unittest.h"
+#include "memory_stream_unittest.h"
+#include "pseudo_tcp_unittest.h"
 
 /*** MACROS ******************************************************************/
 
@@ -59,26 +59,18 @@ extern CU_ErrorCode CU_basic_run_tests(void);
 
 
 /*** PUBLIC FUNCTION DEFINITIONS *********************************************/
+
 static int testInit(void)
 {
     return 0;
 }
+
 static int testClean(void)
 {
-    //sleep(1);
-    return 0;
-}
-void testAssertTrue(void);
-
-void unittest_main();
-
-int main(int argc, char **argv)
-{
-    unittest_main();
     return 0;
 }
 
-void unittest_main()
+void pseudoTCP_test()
 {
     CU_pSuite pSuite;
     CU_initialize_registry();
@@ -139,16 +131,7 @@ void unittest_main()
     //CU_console_run_tests();
     CU_basic_run_tests();
     CU_cleanup_registry();
-}
-
-
-void testAssertTrue(void)
-{
-    CU_ASSERT_TRUE(CU_TRUE);
-    CU_ASSERT_TRUE(!CU_FALSE);
-
-    //CU_ASSERT_TRUE(!CU_TRUE);
-    //CU_ASSERT_TRUE(CU_FALSE);
+    
 }
 
 /*****************************************************************************/

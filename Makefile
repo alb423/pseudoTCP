@@ -4,7 +4,7 @@ STRIP	= $(CROSS_COMPILE)strip
 AR	= $(CROSS_COMPILE)ar
 
 LIBPATH = 
-INCLUDEPATH = -I. -Iinclude -Iinclude/test
+INCLUDEPATH = -I. -Iinc -Itest/inc
 
 UNAME_S := $(shell uname -s)
 
@@ -20,27 +20,27 @@ ifeq ($(UNAME_S),Darwin)
    LIBS    = -L/opt/local/lib -lpthread -rdynamic
 endif
 
-CFLAGS  = -g -Wall -Wno-format-security -DNCURSES_OPAQUE=0 $(INCLUDEPATH)
+CFLAGS  = -g -Wall -Wno-format-security $(INCLUDEPATH)
 SRC_C   +=  $(wildcard src/*.c)
 OBJS    +=  $(SRC_C:%.c=%.o)
 
-TEST_SRC_C   +=  $(wildcard src/test/*.c) $(wildcard src/CUnit/*.c) 
+TEST_SRC_C   +=  $(wildcard src/*.c) $(wildcard test/*.c) $(wildcard test/CUnit/*.c) $(wildcard test/pseudotcp/*.c)
 TEST_OBJS    +=  $(TEST_SRC_C:%.c=%.o)
 TEST_LIBS    +=  $(LIBS) libpseudoTCP.a
 
-all: pseudoTCP test
+all: pseudoTCP pseudoTCP_test
 	
 pseudoTCP: $(OBJS)
 	$(AR) cr libpseudoTCP.a $(OBJS) 	
 	
-test: pseudoTCP $(TEST_OBJS)
+pseudoTCP_test: pseudoTCP $(TEST_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(TEST_OBJS) $(TEST_LIBS)
 	
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<
    
 clean:
-	rm -rf $(OBJS) $(TEST_OBJS) test libpseudoTCP.a
+	rm -rf $(OBJS) $(TEST_OBJS) pseudoTCP_test libpseudoTCP.a
 
 	
 

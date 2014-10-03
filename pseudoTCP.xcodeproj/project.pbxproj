@@ -7,27 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9AEE41B119D90C03003B4627 /* Util.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41A819D90C03003B4627 /* Util.c */; };
-		9AEE41B219D90C03003B4627 /* TestRun.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41A919D90C03003B4627 /* TestRun.c */; };
-		9AEE41B319D90C03003B4627 /* TestDB.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41AA19D90C03003B4627 /* TestDB.c */; };
-		9AEE41B419D90C03003B4627 /* MyMem.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41AB19D90C03003B4627 /* MyMem.c */; };
-		9AEE41B519D90C03003B4627 /* Curses.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41AC19D90C03003B4627 /* Curses.c */; };
-		9AEE41B619D90C03003B4627 /* CUError.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41AD19D90C03003B4627 /* CUError.c */; };
-		9AEE41B719D90C03003B4627 /* Console.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41AE19D90C03003B4627 /* Console.c */; };
-		9AEE41B819D90C03003B4627 /* Basic.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41AF19D90C03003B4627 /* Basic.c */; };
-		9AEE41B919D90C03003B4627 /* Automated.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41B019D90C03003B4627 /* Automated.c */; };
+		9A8D307B19DE9E3B003A6FAC /* pseudotcp_test.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D307919DE9E3B003A6FAC /* pseudotcp_test.c */; };
+		9A8D307C19DE9E3B003A6FAC /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D307A19DE9E3B003A6FAC /* main.c */; };
+		9A8D308619DE9E53003A6FAC /* TestRun.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D307E19DE9E53003A6FAC /* TestRun.c */; };
+		9A8D308719DE9E53003A6FAC /* TestDB.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D307F19DE9E53003A6FAC /* TestDB.c */; };
+		9A8D308819DE9E53003A6FAC /* Automated.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D308019DE9E53003A6FAC /* Automated.c */; };
+		9A8D308919DE9E53003A6FAC /* Console.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D308119DE9E53003A6FAC /* Console.c */; };
+		9A8D308A19DE9E53003A6FAC /* MyMem.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D308219DE9E53003A6FAC /* MyMem.c */; };
+		9A8D308B19DE9E53003A6FAC /* Util.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D308319DE9E53003A6FAC /* Util.c */; };
+		9A8D308C19DE9E53003A6FAC /* Basic.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D308419DE9E53003A6FAC /* Basic.c */; };
+		9A8D308D19DE9E53003A6FAC /* CUError.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D308519DE9E53003A6FAC /* CUError.c */; };
+		9A8D30A319DE9E88003A6FAC /* pseudo_tcp_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D309D19DE9E88003A6FAC /* pseudo_tcp_unittest.c */; };
+		9A8D30A419DE9E88003A6FAC /* message_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D309E19DE9E88003A6FAC /* message_queue.c */; };
+		9A8D30A519DE9E88003A6FAC /* fifo_buffer_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D309F19DE9E88003A6FAC /* fifo_buffer_unittest.c */; };
+		9A8D30A619DE9E88003A6FAC /* segment_list_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D30A019DE9E88003A6FAC /* segment_list_unittest.c */; };
+		9A8D30A719DE9E88003A6FAC /* memory_stream.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D30A119DE9E88003A6FAC /* memory_stream.c */; };
+		9A8D30A819DE9E88003A6FAC /* memory_stream_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9A8D30A219DE9E88003A6FAC /* memory_stream_unittest.c */; };
 		9AEE41C719D92D99003B4627 /* segment_list.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41C219D92D99003B4627 /* segment_list.c */; };
 		9AEE41C819D92D99003B4627 /* pseudo_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41C319D92D99003B4627 /* pseudo_tcp.c */; };
 		9AEE41C919D92D99003B4627 /* pseudo_tcp_porting.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41C419D92D99003B4627 /* pseudo_tcp_porting.c */; };
 		9AEE41CA19D92D99003B4627 /* mi_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41C519D92D99003B4627 /* mi_util.c */; };
 		9AEE41CB19D92D99003B4627 /* fifo_buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41C619D92D99003B4627 /* fifo_buffer.c */; };
-		9AEE41E919D92FD7003B4627 /* segment_list_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41E219D92FD7003B4627 /* segment_list_unittest.c */; };
-		9AEE41EA19D92FD7003B4627 /* pseudo_tcp_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41E319D92FD7003B4627 /* pseudo_tcp_unittest.c */; };
-		9AEE41EB19D92FD7003B4627 /* message_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41E419D92FD7003B4627 /* message_queue.c */; };
-		9AEE41EC19D92FD7003B4627 /* memory_stream.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41E519D92FD7003B4627 /* memory_stream.c */; };
-		9AEE41ED19D92FD7003B4627 /* memory_stream_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41E619D92FD7003B4627 /* memory_stream_unittest.c */; };
-		9AEE41EE19D92FD7003B4627 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41E719D92FD7003B4627 /* main.c */; };
-		9AEE41EF19D92FD7003B4627 /* fifo_buffer_unittest.c in Sources */ = {isa = PBXBuildFile; fileRef = 9AEE41E819D92FD7003B4627 /* fifo_buffer_unittest.c */; };
 		9AEE41F719D95263003B4627 /* libcurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9AEE41F619D95263003B4627 /* libcurses.dylib */; };
 /* End PBXBuildFile section */
 
@@ -44,54 +44,48 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9A8D307119DE9E27003A6FAC /* pseudo_tcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp.h; path = inc/pseudo_tcp.h; sourceTree = SOURCE_ROOT; };
+		9A8D307219DE9E27003A6FAC /* mi_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mi_util.h; path = inc/mi_util.h; sourceTree = SOURCE_ROOT; };
+		9A8D307319DE9E27003A6FAC /* fifo_buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fifo_buffer.h; path = inc/fifo_buffer.h; sourceTree = SOURCE_ROOT; };
+		9A8D307419DE9E27003A6FAC /* pseudo_tcp_porting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp_porting.h; path = inc/pseudo_tcp_porting.h; sourceTree = SOURCE_ROOT; };
+		9A8D307519DE9E27003A6FAC /* segment_list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = segment_list.h; path = inc/segment_list.h; sourceTree = SOURCE_ROOT; };
+		9A8D307619DE9E27003A6FAC /* byteorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = byteorder.h; path = inc/byteorder.h; sourceTree = SOURCE_ROOT; };
+		9A8D307719DE9E27003A6FAC /* mi_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mi_types.h; path = inc/mi_types.h; sourceTree = SOURCE_ROOT; };
+		9A8D307819DE9E27003A6FAC /* pseudo_tcp_int.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp_int.h; path = inc/pseudo_tcp_int.h; sourceTree = SOURCE_ROOT; };
+		9A8D307919DE9E3B003A6FAC /* pseudotcp_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pseudotcp_test.c; path = test/pseudotcp_test.c; sourceTree = SOURCE_ROOT; };
+		9A8D307A19DE9E3B003A6FAC /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = test/main.c; sourceTree = SOURCE_ROOT; };
+		9A8D307E19DE9E53003A6FAC /* TestRun.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = TestRun.c; path = test/CUnit/TestRun.c; sourceTree = SOURCE_ROOT; };
+		9A8D307F19DE9E53003A6FAC /* TestDB.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = TestDB.c; path = test/CUnit/TestDB.c; sourceTree = SOURCE_ROOT; };
+		9A8D308019DE9E53003A6FAC /* Automated.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Automated.c; path = test/CUnit/Automated.c; sourceTree = SOURCE_ROOT; };
+		9A8D308119DE9E53003A6FAC /* Console.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Console.c; path = test/CUnit/Console.c; sourceTree = SOURCE_ROOT; };
+		9A8D308219DE9E53003A6FAC /* MyMem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = MyMem.c; path = test/CUnit/MyMem.c; sourceTree = SOURCE_ROOT; };
+		9A8D308319DE9E53003A6FAC /* Util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Util.c; path = test/CUnit/Util.c; sourceTree = SOURCE_ROOT; };
+		9A8D308419DE9E53003A6FAC /* Basic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Basic.c; path = test/CUnit/Basic.c; sourceTree = SOURCE_ROOT; };
+		9A8D308519DE9E53003A6FAC /* CUError.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = CUError.c; path = test/CUnit/CUError.c; sourceTree = SOURCE_ROOT; };
+		9A8D309019DE9E73003A6FAC /* TestDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestDB.h; path = test/inc/CUnit/TestDB.h; sourceTree = SOURCE_ROOT; };
+		9A8D309119DE9E73003A6FAC /* TestRun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestRun.h; path = test/inc/CUnit/TestRun.h; sourceTree = SOURCE_ROOT; };
+		9A8D309219DE9E73003A6FAC /* CUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUnit.h; path = test/inc/CUnit/CUnit.h; sourceTree = SOURCE_ROOT; };
+		9A8D309319DE9E73003A6FAC /* CUError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUError.h; path = test/inc/CUnit/CUError.h; sourceTree = SOURCE_ROOT; };
+		9A8D309419DE9E73003A6FAC /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Util.h; path = test/inc/CUnit/Util.h; sourceTree = SOURCE_ROOT; };
+		9A8D309519DE9E73003A6FAC /* MyMem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MyMem.h; path = test/inc/CUnit/MyMem.h; sourceTree = SOURCE_ROOT; };
+		9A8D309619DE9E73003A6FAC /* Basic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Basic.h; path = test/inc/CUnit/Basic.h; sourceTree = SOURCE_ROOT; };
+		9A8D309719DE9E73003A6FAC /* Automated.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Automated.h; path = test/inc/CUnit/Automated.h; sourceTree = SOURCE_ROOT; };
+		9A8D309819DE9E73003A6FAC /* CUCurses.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUCurses.h; path = test/inc/CUnit/CUCurses.h; sourceTree = SOURCE_ROOT; };
+		9A8D309919DE9E73003A6FAC /* Console.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Console.h; path = test/inc/CUnit/Console.h; sourceTree = SOURCE_ROOT; };
+		9A8D309A19DE9E73003A6FAC /* CUnit_intl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUnit_intl.h; path = test/inc/CUnit/CUnit_intl.h; sourceTree = SOURCE_ROOT; };
+		9A8D309B19DE9E73003A6FAC /* wxWidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wxWidget.h; path = test/inc/CUnit/wxWidget.h; sourceTree = SOURCE_ROOT; };
+		9A8D309D19DE9E88003A6FAC /* pseudo_tcp_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pseudo_tcp_unittest.c; path = test/pseudotcp/pseudo_tcp_unittest.c; sourceTree = SOURCE_ROOT; };
+		9A8D309E19DE9E88003A6FAC /* message_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = message_queue.c; path = test/pseudotcp/message_queue.c; sourceTree = SOURCE_ROOT; };
+		9A8D309F19DE9E88003A6FAC /* fifo_buffer_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fifo_buffer_unittest.c; path = test/pseudotcp/fifo_buffer_unittest.c; sourceTree = SOURCE_ROOT; };
+		9A8D30A019DE9E88003A6FAC /* segment_list_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = segment_list_unittest.c; path = test/pseudotcp/segment_list_unittest.c; sourceTree = SOURCE_ROOT; };
+		9A8D30A119DE9E88003A6FAC /* memory_stream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory_stream.c; path = test/pseudotcp/memory_stream.c; sourceTree = SOURCE_ROOT; };
+		9A8D30A219DE9E88003A6FAC /* memory_stream_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory_stream_unittest.c; path = test/pseudotcp/memory_stream_unittest.c; sourceTree = SOURCE_ROOT; };
 		9ABE1F4A19A499930096298B /* pseudoTCP */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pseudoTCP; sourceTree = BUILT_PRODUCTS_DIR; };
-		9AEE419C19D90BF8003B4627 /* wxWidget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wxWidget.h; path = include/CUnit/wxWidget.h; sourceTree = SOURCE_ROOT; };
-		9AEE419D19D90BF8003B4627 /* Util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Util.h; path = include/CUnit/Util.h; sourceTree = SOURCE_ROOT; };
-		9AEE419E19D90BF8003B4627 /* TestRun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestRun.h; path = include/CUnit/TestRun.h; sourceTree = SOURCE_ROOT; };
-		9AEE419F19D90BF8003B4627 /* TestDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestDB.h; path = include/CUnit/TestDB.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A019D90BF8003B4627 /* MyMem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MyMem.h; path = include/CUnit/MyMem.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A119D90BF8003B4627 /* CUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUnit.h; path = include/CUnit/CUnit.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A219D90BF8003B4627 /* CUnit_intl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUnit_intl.h; path = include/CUnit/CUnit_intl.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A319D90BF8003B4627 /* CUError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUError.h; path = include/CUnit/CUError.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A419D90BF8003B4627 /* CUCurses.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CUCurses.h; path = include/CUnit/CUCurses.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A519D90BF8003B4627 /* Console.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Console.h; path = include/CUnit/Console.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A619D90BF8003B4627 /* Basic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Basic.h; path = include/CUnit/Basic.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A719D90BF8003B4627 /* Automated.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Automated.h; path = include/CUnit/Automated.h; sourceTree = SOURCE_ROOT; };
-		9AEE41A819D90C03003B4627 /* Util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Util.c; path = src/CUnit/Util.c; sourceTree = SOURCE_ROOT; };
-		9AEE41A919D90C03003B4627 /* TestRun.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = TestRun.c; path = src/CUnit/TestRun.c; sourceTree = SOURCE_ROOT; };
-		9AEE41AA19D90C03003B4627 /* TestDB.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = TestDB.c; path = src/CUnit/TestDB.c; sourceTree = SOURCE_ROOT; };
-		9AEE41AB19D90C03003B4627 /* MyMem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = MyMem.c; path = src/CUnit/MyMem.c; sourceTree = SOURCE_ROOT; };
-		9AEE41AC19D90C03003B4627 /* Curses.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Curses.c; path = src/CUnit/Curses.c; sourceTree = SOURCE_ROOT; };
-		9AEE41AD19D90C03003B4627 /* CUError.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = CUError.c; path = src/CUnit/CUError.c; sourceTree = SOURCE_ROOT; };
-		9AEE41AE19D90C03003B4627 /* Console.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Console.c; path = src/CUnit/Console.c; sourceTree = SOURCE_ROOT; };
-		9AEE41AF19D90C03003B4627 /* Basic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Basic.c; path = src/CUnit/Basic.c; sourceTree = SOURCE_ROOT; };
-		9AEE41B019D90C03003B4627 /* Automated.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = Automated.c; path = src/CUnit/Automated.c; sourceTree = SOURCE_ROOT; };
-		9AEE41BA19D92D80003B4627 /* segment_list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = segment_list.h; path = include/segment_list.h; sourceTree = SOURCE_ROOT; };
-		9AEE41BB19D92D80003B4627 /* pseudo_tcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp.h; path = include/pseudo_tcp.h; sourceTree = SOURCE_ROOT; };
-		9AEE41BC19D92D80003B4627 /* pseudo_tcp_porting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp_porting.h; path = include/pseudo_tcp_porting.h; sourceTree = SOURCE_ROOT; };
-		9AEE41BD19D92D80003B4627 /* pseudo_tcp_int.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp_int.h; path = include/pseudo_tcp_int.h; sourceTree = SOURCE_ROOT; };
-		9AEE41BE19D92D80003B4627 /* mi_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mi_types.h; path = include/mi_types.h; sourceTree = SOURCE_ROOT; };
-		9AEE41BF19D92D80003B4627 /* fifo_buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fifo_buffer.h; path = include/fifo_buffer.h; sourceTree = SOURCE_ROOT; };
-		9AEE41C019D92D80003B4627 /* byteorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = byteorder.h; path = include/byteorder.h; sourceTree = SOURCE_ROOT; };
-		9AEE41C119D92D93003B4627 /* mi_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mi_util.h; path = include/mi_util.h; sourceTree = SOURCE_ROOT; };
 		9AEE41C219D92D99003B4627 /* segment_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = segment_list.c; path = src/segment_list.c; sourceTree = SOURCE_ROOT; };
 		9AEE41C319D92D99003B4627 /* pseudo_tcp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pseudo_tcp.c; path = src/pseudo_tcp.c; sourceTree = SOURCE_ROOT; };
 		9AEE41C419D92D99003B4627 /* pseudo_tcp_porting.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pseudo_tcp_porting.c; path = src/pseudo_tcp_porting.c; sourceTree = SOURCE_ROOT; };
 		9AEE41C519D92D99003B4627 /* mi_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mi_util.c; path = src/mi_util.c; sourceTree = SOURCE_ROOT; };
 		9AEE41C619D92D99003B4627 /* fifo_buffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fifo_buffer.c; path = src/fifo_buffer.c; sourceTree = SOURCE_ROOT; };
-		9AEE41E219D92FD7003B4627 /* segment_list_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = segment_list_unittest.c; path = src/test/segment_list_unittest.c; sourceTree = SOURCE_ROOT; };
-		9AEE41E319D92FD7003B4627 /* pseudo_tcp_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pseudo_tcp_unittest.c; path = src/test/pseudo_tcp_unittest.c; sourceTree = SOURCE_ROOT; };
-		9AEE41E419D92FD7003B4627 /* message_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = message_queue.c; path = src/test/message_queue.c; sourceTree = SOURCE_ROOT; };
-		9AEE41E519D92FD7003B4627 /* memory_stream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory_stream.c; path = src/test/memory_stream.c; sourceTree = SOURCE_ROOT; };
-		9AEE41E619D92FD7003B4627 /* memory_stream_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memory_stream_unittest.c; path = src/test/memory_stream_unittest.c; sourceTree = SOURCE_ROOT; };
-		9AEE41E719D92FD7003B4627 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = src/test/main.c; sourceTree = SOURCE_ROOT; };
-		9AEE41E819D92FD7003B4627 /* fifo_buffer_unittest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fifo_buffer_unittest.c; path = src/test/fifo_buffer_unittest.c; sourceTree = SOURCE_ROOT; };
-		9AEE41F019D92FE6003B4627 /* segment_list_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = segment_list_unittest.h; path = include/test/segment_list_unittest.h; sourceTree = SOURCE_ROOT; };
-		9AEE41F119D92FE6003B4627 /* pseudo_tcp_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pseudo_tcp_unittest.h; path = include/test/pseudo_tcp_unittest.h; sourceTree = SOURCE_ROOT; };
-		9AEE41F219D92FE6003B4627 /* message_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = message_queue.h; path = include/test/message_queue.h; sourceTree = SOURCE_ROOT; };
-		9AEE41F319D92FE6003B4627 /* memory_stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory_stream.h; path = include/test/memory_stream.h; sourceTree = SOURCE_ROOT; };
-		9AEE41F419D92FE6003B4627 /* memory_stream_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memory_stream_unittest.h; path = include/test/memory_stream_unittest.h; sourceTree = SOURCE_ROOT; };
-		9AEE41F519D92FE6003B4627 /* fifo_buffer_unittest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fifo_buffer_unittest.h; path = include/test/fifo_buffer_unittest.h; sourceTree = SOURCE_ROOT; };
 		9AEE41F619D95263003B4627 /* libcurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcurses.dylib; path = usr/lib/libcurses.dylib; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -107,6 +101,73 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9A8D307019DE9E10003A6FAC /* test */ = {
+			isa = PBXGroup;
+			children = (
+				9A8D309C19DE9E7C003A6FAC /* pseudoTCP */,
+				9A8D308E19DE9E59003A6FAC /* inc */,
+				9A8D307D19DE9E44003A6FAC /* CUnit */,
+				9A8D307919DE9E3B003A6FAC /* pseudotcp_test.c */,
+				9A8D307A19DE9E3B003A6FAC /* main.c */,
+			);
+			name = test;
+			sourceTree = "<group>";
+		};
+		9A8D307D19DE9E44003A6FAC /* CUnit */ = {
+			isa = PBXGroup;
+			children = (
+				9A8D307E19DE9E53003A6FAC /* TestRun.c */,
+				9A8D307F19DE9E53003A6FAC /* TestDB.c */,
+				9A8D308019DE9E53003A6FAC /* Automated.c */,
+				9A8D308119DE9E53003A6FAC /* Console.c */,
+				9A8D308219DE9E53003A6FAC /* MyMem.c */,
+				9A8D308319DE9E53003A6FAC /* Util.c */,
+				9A8D308419DE9E53003A6FAC /* Basic.c */,
+				9A8D308519DE9E53003A6FAC /* CUError.c */,
+			);
+			name = CUnit;
+			sourceTree = "<group>";
+		};
+		9A8D308E19DE9E59003A6FAC /* inc */ = {
+			isa = PBXGroup;
+			children = (
+				9A8D308F19DE9E63003A6FAC /* CUnit */,
+			);
+			name = inc;
+			sourceTree = "<group>";
+		};
+		9A8D308F19DE9E63003A6FAC /* CUnit */ = {
+			isa = PBXGroup;
+			children = (
+				9A8D309019DE9E73003A6FAC /* TestDB.h */,
+				9A8D309119DE9E73003A6FAC /* TestRun.h */,
+				9A8D309219DE9E73003A6FAC /* CUnit.h */,
+				9A8D309319DE9E73003A6FAC /* CUError.h */,
+				9A8D309419DE9E73003A6FAC /* Util.h */,
+				9A8D309519DE9E73003A6FAC /* MyMem.h */,
+				9A8D309619DE9E73003A6FAC /* Basic.h */,
+				9A8D309719DE9E73003A6FAC /* Automated.h */,
+				9A8D309819DE9E73003A6FAC /* CUCurses.h */,
+				9A8D309919DE9E73003A6FAC /* Console.h */,
+				9A8D309A19DE9E73003A6FAC /* CUnit_intl.h */,
+				9A8D309B19DE9E73003A6FAC /* wxWidget.h */,
+			);
+			name = CUnit;
+			sourceTree = "<group>";
+		};
+		9A8D309C19DE9E7C003A6FAC /* pseudoTCP */ = {
+			isa = PBXGroup;
+			children = (
+				9A8D309D19DE9E88003A6FAC /* pseudo_tcp_unittest.c */,
+				9A8D309E19DE9E88003A6FAC /* message_queue.c */,
+				9A8D309F19DE9E88003A6FAC /* fifo_buffer_unittest.c */,
+				9A8D30A019DE9E88003A6FAC /* segment_list_unittest.c */,
+				9A8D30A119DE9E88003A6FAC /* memory_stream.c */,
+				9A8D30A219DE9E88003A6FAC /* memory_stream_unittest.c */,
+			);
+			name = pseudoTCP;
+			sourceTree = "<group>";
+		};
 		9ABE1F4119A499930096298B = {
 			isa = PBXGroup;
 			children = (
@@ -127,96 +188,31 @@
 		9ABE1F4C19A499930096298B /* pseudoTCP */ = {
 			isa = PBXGroup;
 			children = (
+				9A8D307019DE9E10003A6FAC /* test */,
 				B2281BA619A4F0530070EDF9 /* src */,
-				9ABE1F5719A499BC0096298B /* include */,
+				9ABE1F5719A499BC0096298B /* inc */,
 			);
 			path = pseudoTCP;
 			sourceTree = "<group>";
 		};
-		9ABE1F5719A499BC0096298B /* include */ = {
+		9ABE1F5719A499BC0096298B /* inc */ = {
 			isa = PBXGroup;
 			children = (
-				9AEE41E019D92FC9003B4627 /* test */,
-				9AEE418F19D90B37003B4627 /* CUnit */,
-				9AEE41C119D92D93003B4627 /* mi_util.h */,
-				9AEE41BA19D92D80003B4627 /* segment_list.h */,
-				9AEE41BB19D92D80003B4627 /* pseudo_tcp.h */,
-				9AEE41BC19D92D80003B4627 /* pseudo_tcp_porting.h */,
-				9AEE41BD19D92D80003B4627 /* pseudo_tcp_int.h */,
-				9AEE41BE19D92D80003B4627 /* mi_types.h */,
-				9AEE41BF19D92D80003B4627 /* fifo_buffer.h */,
-				9AEE41C019D92D80003B4627 /* byteorder.h */,
+				9A8D307119DE9E27003A6FAC /* pseudo_tcp.h */,
+				9A8D307219DE9E27003A6FAC /* mi_util.h */,
+				9A8D307319DE9E27003A6FAC /* fifo_buffer.h */,
+				9A8D307419DE9E27003A6FAC /* pseudo_tcp_porting.h */,
+				9A8D307519DE9E27003A6FAC /* segment_list.h */,
+				9A8D307619DE9E27003A6FAC /* byteorder.h */,
+				9A8D307719DE9E27003A6FAC /* mi_types.h */,
+				9A8D307819DE9E27003A6FAC /* pseudo_tcp_int.h */,
 			);
-			name = include;
-			sourceTree = "<group>";
-		};
-		9AEE412B19D901A2003B4627 /* CUnit */ = {
-			isa = PBXGroup;
-			children = (
-				9AEE41A819D90C03003B4627 /* Util.c */,
-				9AEE41A919D90C03003B4627 /* TestRun.c */,
-				9AEE41AA19D90C03003B4627 /* TestDB.c */,
-				9AEE41AB19D90C03003B4627 /* MyMem.c */,
-				9AEE41AC19D90C03003B4627 /* Curses.c */,
-				9AEE41AD19D90C03003B4627 /* CUError.c */,
-				9AEE41AE19D90C03003B4627 /* Console.c */,
-				9AEE41AF19D90C03003B4627 /* Basic.c */,
-				9AEE41B019D90C03003B4627 /* Automated.c */,
-			);
-			name = CUnit;
-			sourceTree = "<group>";
-		};
-		9AEE418F19D90B37003B4627 /* CUnit */ = {
-			isa = PBXGroup;
-			children = (
-				9AEE419C19D90BF8003B4627 /* wxWidget.h */,
-				9AEE419D19D90BF8003B4627 /* Util.h */,
-				9AEE419E19D90BF8003B4627 /* TestRun.h */,
-				9AEE419F19D90BF8003B4627 /* TestDB.h */,
-				9AEE41A019D90BF8003B4627 /* MyMem.h */,
-				9AEE41A119D90BF8003B4627 /* CUnit.h */,
-				9AEE41A219D90BF8003B4627 /* CUnit_intl.h */,
-				9AEE41A319D90BF8003B4627 /* CUError.h */,
-				9AEE41A419D90BF8003B4627 /* CUCurses.h */,
-				9AEE41A519D90BF8003B4627 /* Console.h */,
-				9AEE41A619D90BF8003B4627 /* Basic.h */,
-				9AEE41A719D90BF8003B4627 /* Automated.h */,
-			);
-			name = CUnit;
-			sourceTree = "<group>";
-		};
-		9AEE41E019D92FC9003B4627 /* test */ = {
-			isa = PBXGroup;
-			children = (
-				9AEE41F019D92FE6003B4627 /* segment_list_unittest.h */,
-				9AEE41F119D92FE6003B4627 /* pseudo_tcp_unittest.h */,
-				9AEE41F219D92FE6003B4627 /* message_queue.h */,
-				9AEE41F319D92FE6003B4627 /* memory_stream.h */,
-				9AEE41F419D92FE6003B4627 /* memory_stream_unittest.h */,
-				9AEE41F519D92FE6003B4627 /* fifo_buffer_unittest.h */,
-			);
-			name = test;
-			sourceTree = "<group>";
-		};
-		9AEE41E119D92FCD003B4627 /* test */ = {
-			isa = PBXGroup;
-			children = (
-				9AEE41E219D92FD7003B4627 /* segment_list_unittest.c */,
-				9AEE41E319D92FD7003B4627 /* pseudo_tcp_unittest.c */,
-				9AEE41E419D92FD7003B4627 /* message_queue.c */,
-				9AEE41E519D92FD7003B4627 /* memory_stream.c */,
-				9AEE41E619D92FD7003B4627 /* memory_stream_unittest.c */,
-				9AEE41E719D92FD7003B4627 /* main.c */,
-				9AEE41E819D92FD7003B4627 /* fifo_buffer_unittest.c */,
-			);
-			name = test;
+			name = inc;
 			sourceTree = "<group>";
 		};
 		B2281BA619A4F0530070EDF9 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				9AEE41E119D92FCD003B4627 /* test */,
-				9AEE412B19D901A2003B4627 /* CUnit */,
 				9AEE41C219D92D99003B4627 /* segment_list.c */,
 				9AEE41C319D92D99003B4627 /* pseudo_tcp.c */,
 				9AEE41C419D92D99003B4627 /* pseudo_tcp_porting.c */,
@@ -277,27 +273,27 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9AEE41EE19D92FD7003B4627 /* main.c in Sources */,
-				9AEE41ED19D92FD7003B4627 /* memory_stream_unittest.c in Sources */,
-				9AEE41EC19D92FD7003B4627 /* memory_stream.c in Sources */,
-				9AEE41B119D90C03003B4627 /* Util.c in Sources */,
-				9AEE41B319D90C03003B4627 /* TestDB.c in Sources */,
-				9AEE41B519D90C03003B4627 /* Curses.c in Sources */,
-				9AEE41B819D90C03003B4627 /* Basic.c in Sources */,
+				9A8D308B19DE9E53003A6FAC /* Util.c in Sources */,
 				9AEE41CA19D92D99003B4627 /* mi_util.c in Sources */,
-				9AEE41EB19D92FD7003B4627 /* message_queue.c in Sources */,
-				9AEE41B619D90C03003B4627 /* CUError.c in Sources */,
-				9AEE41B419D90C03003B4627 /* MyMem.c in Sources */,
+				9A8D308C19DE9E53003A6FAC /* Basic.c in Sources */,
+				9A8D30A519DE9E88003A6FAC /* fifo_buffer_unittest.c in Sources */,
 				9AEE41CB19D92D99003B4627 /* fifo_buffer.c in Sources */,
-				9AEE41B219D90C03003B4627 /* TestRun.c in Sources */,
-				9AEE41B919D90C03003B4627 /* Automated.c in Sources */,
 				9AEE41C819D92D99003B4627 /* pseudo_tcp.c in Sources */,
-				9AEE41EA19D92FD7003B4627 /* pseudo_tcp_unittest.c in Sources */,
+				9A8D30A419DE9E88003A6FAC /* message_queue.c in Sources */,
 				9AEE41C919D92D99003B4627 /* pseudo_tcp_porting.c in Sources */,
-				9AEE41B719D90C03003B4627 /* Console.c in Sources */,
-				9AEE41EF19D92FD7003B4627 /* fifo_buffer_unittest.c in Sources */,
-				9AEE41E919D92FD7003B4627 /* segment_list_unittest.c in Sources */,
+				9A8D308919DE9E53003A6FAC /* Console.c in Sources */,
 				9AEE41C719D92D99003B4627 /* segment_list.c in Sources */,
+				9A8D308D19DE9E53003A6FAC /* CUError.c in Sources */,
+				9A8D30A819DE9E88003A6FAC /* memory_stream_unittest.c in Sources */,
+				9A8D307B19DE9E3B003A6FAC /* pseudotcp_test.c in Sources */,
+				9A8D307C19DE9E3B003A6FAC /* main.c in Sources */,
+				9A8D30A319DE9E88003A6FAC /* pseudo_tcp_unittest.c in Sources */,
+				9A8D308619DE9E53003A6FAC /* TestRun.c in Sources */,
+				9A8D308A19DE9E53003A6FAC /* MyMem.c in Sources */,
+				9A8D30A719DE9E88003A6FAC /* memory_stream.c in Sources */,
+				9A8D308819DE9E53003A6FAC /* Automated.c in Sources */,
+				9A8D30A619DE9E88003A6FAC /* segment_list_unittest.c in Sources */,
+				9A8D308719DE9E53003A6FAC /* TestDB.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -337,6 +333,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					test/inc,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -370,6 +371,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					test/inc,
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;

@@ -35,7 +35,7 @@ extern "C" {
 #include <CUnit/Console.h>
 #include "mi_types.h"
 #include "fifo_buffer.h"
-#include "test/memory_stream.h"
+#include "memory_stream.h"
 /*** MACROS ******************************************************************/
 
 

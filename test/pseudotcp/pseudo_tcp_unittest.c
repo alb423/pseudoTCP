@@ -1307,6 +1307,7 @@ void PseudoTcpTest_TestSendWithDelayAndOptNaglingOff(void)
     SetDelay(50);
     SetOptNagling(false);
     TestTransfer_01(100000);
+    PseudoTcpTestBase_Destroy(pTest);
 }
 
 // Test sending data with 50ms delay and Delayed ACK disabled.
@@ -1321,6 +1322,7 @@ void PseudoTcpTest_TestSendWithDelayAndOptAckDelayOff(void)
     SetDelay(50);
     SetOptAckDelay(0);
     TestTransfer_01(100000);
+    PseudoTcpTestBase_Destroy(pTest);
 }
 
 // Test a large receive buffer with a sender that doesn't support scaling.
